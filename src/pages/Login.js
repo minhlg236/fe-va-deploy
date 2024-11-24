@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/Login.css";
 
 // Định nghĩa Role ID
@@ -18,18 +19,12 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Kiểm tra nếu đã đăng nhập
   useEffect(() => {
     const token = localStorage.getItem("authToken");
-    const roleId = localStorage.getItem("roleId"); // Lấy roleId từ localStorage
-
-    console.log("Token trong localStorage:", token); // Log token
-    console.log("RoleId trong localStorage:", roleId); // Log roleId
+    const roleId = localStorage.getItem("roleId");
 
     if (token && roleId) {
-      switch (
-        parseInt(roleId) // Chuyển roleId từ string sang number
-      ) {
+      switch (parseInt(roleId)) {
         case ROLES.ADMIN:
           navigate("/admin");
           break;
@@ -56,22 +51,15 @@ const Login = () => {
     try {
       const response = await axios.post(
         "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/login",
-        {
-          phoneNumber,
-          password,
-        }
+        { phoneNumber, password }
       );
 
       if (response.status === 200) {
         const { token, user } = response.data;
-        localStorage.setItem("authToken", token); // Lưu JWT vào localStorage
-        localStorage.setItem("roleId", user.roleId); // Lưu roleId vào localStorage
-        localStorage.setItem("userId", user.userId); // Lưu roleId vào localStorage
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("roleId", user.roleId);
+        localStorage.setItem("userId", user.userId);
 
-        console.log("Token sau khi đăng nhập:", token); // Log token
-        console.log("RoleId sau khi đăng nhập:", user.roleId); // Log roleId
-
-        // Điều hướng dựa trên roleId
         switch (user.roleId) {
           case ROLES.ADMIN:
             navigate("/admin");
@@ -96,41 +84,71 @@ const Login = () => {
         setError("Số điện thoại hoặc mật khẩu không đúng!");
       }
     } catch (err) {
-      console.error("Lỗi đăng nhập:", err);
       setError("Đăng nhập thất bại. Vui lòng thử lại.");
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
-        <h2>Đăng nhập</h2>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <label htmlFor="phoneNumber">Số điện thoại</label>
-            <input
-              type="text"
-              id="phoneNumber"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Nhập số điện thoại"
-            />
+    <div className="container login-container">
+      <div className="row justify-content-center align-items-center h-100">
+        <div className="col-lg-6 col-md-8">
+          <div className="card shadow-lg p-4">
+            <div className="card-body">
+              <h2 className="text-center mb-4">Đăng nhập</h2>
+              {error && <div className="alert alert-danger">{error}</div>}
+              <form onSubmit={handleLogin}>
+                <div className="form-group mb-3">
+                  <label htmlFor="phoneNumber">Số điện thoại</label>
+                  <input
+                    type="text"
+                    id="phoneNumber"
+                    className="form-control"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+                <div className="form-group mb-3">
+                  <label htmlFor="password">Mật khẩu</label>
+                  <input
+                    type="password"
+                    id="password"
+                    className="form-control"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu"
+                  />
+                </div>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="rememberMe"
+                    />
+                    <label className="form-check-label" htmlFor="rememberMe">
+                      Nhớ tài khoản
+                    </label>
+                  </div>
+                  <a href="#!" className="text-decoration-none">
+                    Quên mật khẩu?
+                  </a>
+                </div>
+                <button type="submit" className="btn btn-primary w-100 mt-4">
+                  Đăng nhập
+                </button>
+              </form>
+              <div className="text-center mt-3">
+                <p className="small">
+                  Chưa có tài khoản?{" "}
+                  <a href="#!" className="text-decoration-none text-danger">
+                    Đăng ký
+                  </a>
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="input-group">
-            <label htmlFor="password">Mật khẩu</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu"
-            />
-          </div>
-          <button type="submit" className="login-button">
-            Đăng nhập
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
