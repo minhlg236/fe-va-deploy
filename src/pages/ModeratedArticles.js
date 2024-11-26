@@ -40,7 +40,7 @@ const ModeratedArticles = () => {
       const isAccepted =
         activeTab === "accepted" && article.status === "accepted";
       const isRejected =
-        activeTab === "rejected" && article.status === "unaccepted";
+        activeTab === "rejected" && article.status === "rejected";
       const matchesSearchTerm =
         article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         article.authorName.toLowerCase().includes(searchTerm.toLowerCase());

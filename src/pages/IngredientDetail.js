@@ -1,60 +1,76 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/IngredientDetail.css";
-import editIcon from "../assets/icons/edit-icon.png"; // Đường dẫn tới icon chỉnh sửa
-
-const mockIngredientData = [
-  {
-    ingredient_id: 1,
-    name: "Tomato",
-    weight: 100,
-    calories: 18,
-    protein: 0.9,
-    carbs: 3.9,
-    fat: 0.2,
-    fiber: 1.2,
-    vitamin_A: 833,
-    vitamin_B: 0.04,
-    vitamin_C: 13.7,
-    vitamin_D: 0,
-    vitamin_E: 0.54,
-    calcium: 10,
-    iron: 0.3,
-    magnesium: 11,
-    omega_3: 0,
-    sugars: 2.6,
-    cholesterol: 0,
-    sodium: 5,
-  },
-  // Thêm nhiều nguyên liệu khác nếu cần
-];
+import editIcon from "../assets/icons/edit-icon.png"; // Icon chỉnh sửa
+import axios from "axios";
 
 const IngredientDetail = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // Lấy ingredient ID từ URL
   const [ingredient, setIngredient] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
+  const roleId = parseInt(localStorage.getItem("roleId")); // Lấy roleId từ localStorage
 
+  // Kiểm tra quyền truy cập
   useEffect(() => {
-    const fetchedIngredient = mockIngredientData.find(
-      (item) => item.ingredient_id === parseInt(id)
-    );
-    setIngredient(fetchedIngredient);
-  }, [id]);
+    if (roleId !== 5) {
+      alert("Bạn không có quyền truy cập vào trang này!");
+      navigate("/Ingredient-management"); // Chuyển hướng về trang quản lý nguyên liệu
+    }
+  }, [roleId, navigate]);
 
-  if (!ingredient) {
-    return <p>Đang tải thông tin nguyên liệu...</p>;
-  }
+  // Lấy dữ liệu chi tiết nguyên liệu từ API
+  useEffect(() => {
+    const fetchIngredient = async () => {
+      try {
+        const response = await axios.get(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/ingredients/getIngredientByIngredientId/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+        setIngredient(response.data);
+      } catch (error) {
+        console.error("Lỗi khi tải thông tin nguyên liệu:", error);
+        alert("Không thể tải thông tin nguyên liệu.");
+        navigate("/Ingredient-management");
+      }
+    };
 
-  const handleUpdate = () => {
-    alert("Cập nhật thông tin thành công!");
-    setIsEditing(false);
+    fetchIngredient();
+  }, [id, navigate]);
+
+  // Hàm xử lý cập nhật thông tin nguyên liệu
+  const handleUpdate = async () => {
+    try {
+      await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/ingredients/updateIngredient`,
+        ingredient, // Truyền toàn bộ đối tượng ingredient làm body
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+      alert("Cập nhật thông tin thành công!");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật thông tin nguyên liệu:", error);
+      alert("Không thể cập nhật thông tin nguyên liệu.");
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setIngredient({ ...ingredient, [name]: value });
   };
+
+  if (!ingredient) {
+    return <p>Đang tải thông tin nguyên liệu...</p>;
+  }
 
   return (
     <div className="admin-container">
@@ -67,7 +83,6 @@ const IngredientDetail = () => {
             <button className="back-button" onClick={() => navigate(-1)}>
               Quay lại
             </button>
-
             <div
               className="edit-icon"
               onClick={() => setIsEditing(!isEditing)}
@@ -132,6 +147,12 @@ const Sidebar = () => {
         onClick={() => navigate("/Ingredient-management")}
       >
         Quản lí nguyên liệu
+      </div>
+      <div
+        className="sidebar-item"
+        onClick={() => navigate("/articles-management")}
+      >
+        Quản lí bài viết
       </div>
       <div className="sidebar-item logout" onClick={handleLogout}>
         Đăng xuất

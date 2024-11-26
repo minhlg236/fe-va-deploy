@@ -1,76 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/NutritionCriteriaManagement.css";
-import Pagination from "../components/Pagination";
+import axios from "axios";
 import SearchBar from "../components/SearchBar";
-
-const currentCriteria = [
-  {
-    criteriaId: 1,
-    gender: "Male",
-    age_range: "18-25",
-    bmi_range: "18.5-24.9",
-    profession: "Engineer",
-    activity_level: "High",
-    goal: "Gain Muscle",
-    calories: 2500,
-    protein: 100,
-    carbs: 300,
-    fat: 70,
-    fiber: 30,
-    vitamin_A: 500,
-    vitamin_B: 10,
-    vitamin_C: 60,
-    vitamin_D: 15,
-    vitamin_E: 20,
-    calcium: 1000,
-    iron: 8,
-    magnesium: 400,
-    omega_3: 1,
-    sugars: 30,
-    cholesterol: 300,
-    sodium: 1500,
-  },
-  // Thêm nhiều đối tượng khác nếu cần
-];
-const itemsPerPage = 2;
+import NutritionCriteriaTable from "../components/NutritionCriteriaTable"; // Assuming this is the NutritionCriteriaTable component
 
 const NutritionCriteriaManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [nutritionCriteria, setNutritionCriteria] = useState([]); // Data from API
+  const [filteredCriteria, setFilteredCriteria] = useState([]); // Filtered data
 
-  const filteredCriteria = currentCriteria.filter(
-    (criteria) =>
-      criteria.gender.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      criteria.profession.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch data from API
+  useEffect(() => {
+    const fetchNutritionCriteria = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.get(
+          "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/nutritionCriterions/allNutritionCriteria",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setNutritionCriteria(response.data);
+        setFilteredCriteria(response.data); // Initialize filtered data
+      } catch (error) {
+        console.error("Error fetching nutrition criteria:", error);
+        if (error.response && error.response.status === 401) {
+          alert("You are not authorized. Please log in again.");
+          navigate("/");
+        }
+      }
+    };
 
-  const totalPages = Math.ceil(filteredCriteria.length / itemsPerPage);
-  const indexOfLastCriteria = currentPage * itemsPerPage;
-  const indexOfFirstCriteria = indexOfLastCriteria - itemsPerPage;
-  const currentCriteriaPage = filteredCriteria.slice(
-    indexOfFirstCriteria,
-    indexOfLastCriteria
-  );
+    fetchNutritionCriteria();
+  }, [navigate]);
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  // Filter criteria based on search term
+  useEffect(() => {
+    const filtered = nutritionCriteria.filter(
+      (criteria) =>
+        criteria.gender.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        criteria.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        criteria.goal.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredCriteria(filtered);
+  }, [searchTerm, nutritionCriteria]);
 
   return (
-    <div className="Nutrition-container">
+    <div className="nutrition-criteria-container">
       <Sidebar />
       <div className="content">
-        <div className="header-actions">
+        <div className="header">
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           <button
             className="create-button"
@@ -79,58 +62,14 @@ const NutritionCriteriaManagement = () => {
             Create
           </button>
         </div>
-        <table className="nutrition-criteria-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Criteria ID</th>
-              <th>Gender</th>
-              <th>Age Range</th>
-              <th>BMI Range</th>
-              <th>Profession</th>
-              <th>Goal</th>
-              <th>Xem thêm</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentCriteriaPage.map((criteria) => (
-              <tr key={criteria.criteriaId}>
-                <td>
-                  <input type="checkbox" />
-                </td>
-                <td>{criteria.criteriaId}</td>
-                <td>{criteria.gender}</td>
-                <td>{criteria.age_range}</td>
-                <td>{criteria.bmi_range}</td>
-                <td>{criteria.profession}</td>
-                <td>{criteria.goal}</td>
-                <td>
-                  <button
-                    className="detail-button"
-                    onClick={() =>
-                      navigate(
-                        `/nutritionCriteria-detail/${criteria.criteriaId}`
-                      )
-                    }
-                  >
-                    Xem thêm
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Use the NutritionCriteriaTable */}
+        <NutritionCriteriaTable rows={filteredCriteria} />
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPrevPage={handlePrevPage}
-        onNextPage={handleNextPage}
-      />
     </div>
   );
 };
+
+export default NutritionCriteriaManagement;
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -144,33 +83,29 @@ const Sidebar = () => {
         className="sidebar-item"
         onClick={() => navigate("/dishes-management")}
       >
-        Quản lý món ăn
+        Manage Dishes
       </div>
       <div
         className="sidebar-item"
         onClick={() => navigate("/nutritionCriteria-management")}
       >
-        Quản lí thể trạng
+        Manage Nutrition Criteria
       </div>
       <div
         className="sidebar-item"
         onClick={() => navigate("/Ingredient-management")}
       >
-        Quản lí nguyên liệu
+        Manage Ingredients
       </div>
       <div
         className="sidebar-item"
         onClick={() => navigate("/articles-management")}
       >
-        Quản lí bài viết
+        Manage Articles
       </div>
-
       <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
+        Logout
       </div>
     </div>
   );
 };
-
-
-export default NutritionCriteriaManagement;

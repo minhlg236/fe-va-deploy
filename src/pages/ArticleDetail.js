@@ -8,6 +8,8 @@ const ArticleDetail = () => {
   const [article, setArticle] = useState(null);
   const [articleImages, setArticleImages] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [moderateDate, setModerateDate] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -39,7 +41,10 @@ const ArticleDetail = () => {
         setFormData({
           title: response.data.title,
           content: response.data.content,
+          authorId: response.data.authorId,
+          authorName: response.data.authorName,
         });
+        setModerateDate(response.data.moderateDate); // Lấy moderateDate từ API
       } catch (error) {
         console.error("Lỗi khi tải thông tin bài viết:", error);
         alert("Không thể tải thông tin bài viết.");
@@ -131,9 +136,10 @@ const ArticleDetail = () => {
 
   const handleModerateArticle = async (status) => {
     try {
-      const response = await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/updateArticleStatusByArticleId/${article.articleId}`,
-        JSON.stringify(status), // Dữ liệu body
+      // Cập nhật trạng thái bài viết
+      await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/updateArticleStatusByArticleId/${article.articleId}?newStatus=${status}`,
+        {},
         {
           headers: {
             "Content-Type": "application/json",
@@ -141,11 +147,41 @@ const ArticleDetail = () => {
           },
         }
       );
-      setArticle({ ...article, status });
-      alert(`Bài viết đã được ${status === "accepted" ? "duyệt" : "từ chối"}!`);
+
+      if (status === "accepted") {
+        // Nếu trạng thái là "accepted", gọi API cộng điểm
+        await axios.put(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${article.authorId}/10`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+        alert("Bài viết đã được duyệt và điểm đã được cộng cho tác giả!");
+      } else {
+        alert("Bài viết đã bị từ chối!");
+      }
+
+      // Tải lại thông tin bài viết sau khi cập nhật
+      const response = await axios.get(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/Article/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      setArticle(response.data); // Cập nhật bài viết với trạng thái mới
+      setModerateDate(response.data.moderateDate); // Cập nhật ngày duyệt nếu có
     } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái bài viết:", error);
-      alert("Không thể cập nhật trạng thái bài viết.");
+      console.error(
+        "Lỗi khi cập nhật trạng thái bài viết hoặc cộng điểm:",
+        error
+      );
+      alert("Không thể cập nhật trạng thái bài viết hoặc cộng điểm.");
     }
   };
 
@@ -166,7 +202,18 @@ const ArticleDetail = () => {
           >
             Quản lý món ăn
           </div>
-
+          <div
+            className="sidebar-item"
+            onClick={() => navigate("/nutritionCriteria-management")}
+          >
+            Quản lí thể trạng
+          </div>
+          <div
+            className="sidebar-item"
+            onClick={() => navigate("/Ingredient-management")}
+          >
+            Quản lí nguyên liệu
+          </div>
           <div
             className="sidebar-item"
             onClick={() => navigate("/articles-management")}
@@ -189,7 +236,7 @@ const ArticleDetail = () => {
             className="sidebar-item"
             onClick={() => navigate("/moderated-articles")}
           >
-            Bài viết đã được xử lý
+            Bài viết đã được xử lí
           </div>
           <div className="sidebar-item logout" onClick={handleLogout}>
             Đăng xuất
@@ -223,10 +270,21 @@ const ArticleDetail = () => {
           </div>
 
           {/* Hiển thị thông tin bài viết */}
+          {/* Hiển thị thông tin bài viết */}
           {article ? (
             <div className="article-info">
               {isEditing ? (
                 <>
+                  <div>
+                    <label>Tác giả:</label>
+                    <p>{formData.authorName}</p>
+                  </div>
+
+                  <div>
+                    <label>ID Tác giả:</label>
+                    <p>{formData.authorId}</p>
+                  </div>
+
                   <div>
                     <label>Tiêu đề:</label>
                     <input
@@ -244,6 +302,15 @@ const ArticleDetail = () => {
                       value={formData.content}
                       onChange={handleInputChange}
                     ></textarea>
+                  </div>
+
+                  <div>
+                    <label>Ngày phê duyệt:</label>
+                    <p>
+                      {moderateDate
+                        ? new Date(moderateDate).toLocaleString()
+                        : "Chưa được phê duyệt"}
+                    </p>
                   </div>
 
                   <div>
@@ -285,6 +352,24 @@ const ArticleDetail = () => {
                   </div>
 
                   <div>
+                    <label>Ngày phê duyệt:</label>
+                    <p>
+                      {moderateDate
+                        ? new Date(moderateDate).toLocaleDateString()
+                        : "Chưa được phê duyệt"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label>Tác giả:</label>
+                    <p>{formData.authorName}</p>
+                  </div>
+                  <div>
+                    <label>ID Tác giả:</label>
+                    <p>{formData.authorId}</p>
+                  </div>
+
+                  <div>
                     <label>Ảnh bài viết:</label>
                     <div className="article-images">
                       {articleImages.map((image) => (
@@ -301,7 +386,7 @@ const ArticleDetail = () => {
               )}
 
               {/* Nút Duyệt và Từ chối bài viết (chỉ roleId === 4) */}
-              {roleId === 4 && (
+              {roleId === 4 && article.status === "pending" && (
                 <div className="moderate-buttons">
                   <button
                     style={{

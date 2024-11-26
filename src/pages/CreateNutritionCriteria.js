@@ -1,89 +1,194 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/CreateNutritionCriteria.css"; // Tạo file CSS để tùy chỉnh giao diện
+import "../styles/CreateNutritionCriteria.css"; // Ensure you create a CSS file for styling
+import axios from "axios";
 
 const CreateNutritionCriteria = () => {
-  const [criteriaName, setCriteriaName] = useState("");
-  const [calories, setCalories] = useState("");
-  const [protein, setProtein] = useState("");
-  const [carbs, setCarbs] = useState("");
-  const [fat, setFat] = useState("");
+  const [formData, setFormData] = useState({
+    gender: "",
+    ageRange: "",
+    bmiRange: "",
+    profession: "0", // Always set to "0"
+    activityLevel: "",
+    goal: "",
+    calories: "",
+    protein: "",
+    carbs: "",
+    fat: "",
+    fiber: "",
+    vitaminA: "",
+    vitaminB: "",
+    vitaminC: "",
+    vitaminD: "",
+    vitaminE: "",
+    calcium: "",
+    iron: "",
+    magnesium: "",
+    omega3: "",
+    sugars: "",
+    cholesterol: "",
+    sodium: "",
+  });
+
   const navigate = useNavigate();
 
-  const handleCreateNutritionCriteria = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleCreateNutritionCriteria = async (e) => {
     e.preventDefault();
-    // Xử lý logic tạo tiêu chí dinh dưỡng ở đây
-    console.log({
-      criteriaName,
-      calories,
-      protein,
-      carbs,
-      fat,
-    });
-    navigate("/nutrition-criteria"); // Điều hướng sau khi tạo xong
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(
+        "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/nutritionCriterions/createNutritionCriteria",
+        {
+          ...formData,
+          calories: parseFloat(formData.calories || 0),
+          protein: parseFloat(formData.protein || 0),
+          carbs: parseFloat(formData.carbs || 0),
+          fat: parseFloat(formData.fat || 0),
+          fiber: parseFloat(formData.fiber || 0),
+          vitaminA: parseFloat(formData.vitaminA || 0),
+          vitaminB: parseFloat(formData.vitaminB || 0),
+          vitaminC: parseFloat(formData.vitaminC || 0),
+          vitaminD: parseFloat(formData.vitaminD || 0),
+          vitaminE: parseFloat(formData.vitaminE || 0),
+          calcium: parseFloat(formData.calcium || 0),
+          iron: parseFloat(formData.iron || 0),
+          magnesium: parseFloat(formData.magnesium || 0),
+          omega3: parseFloat(formData.omega3 || 0),
+          sugars: parseFloat(formData.sugars || 0),
+          cholesterol: parseFloat(formData.cholesterol || 0),
+          sodium: parseFloat(formData.sodium || 0),
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        alert("Nutrition criteria created successfully!");
+        navigate("/nutritionCriteria-management");
+      }
+    } catch (error) {
+      console.error("Error creating nutrition criteria:", error);
+      alert("Failed to create nutrition criteria. Please try again.");
+    }
   };
 
   return (
     <div className="create-nutrition-container">
-      <h2>Tạo tiêu chí dinh dưỡng mới</h2>
+      <h2>Create New Nutrition Criteria</h2>
       <form onSubmit={handleCreateNutritionCriteria}>
         <div className="nutrition-input-group">
-          <label htmlFor="criteriaName">Tên tiêu chí</label>
+          <label htmlFor="gender">Gender</label>
+          <select
+            id="gender"
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+          </select>
+        </div>
+        <div className="nutrition-input-group">
+          <label htmlFor="ageRange">Age Range</label>
           <input
             type="text"
-            id="criteriaName"
-            value={criteriaName}
-            onChange={(e) => setCriteriaName(e.target.value)}
-            placeholder="Nhập tên tiêu chí"
+            id="ageRange"
+            name="ageRange"
+            value={formData.ageRange}
+            onChange={handleChange}
+            placeholder="Enter age range"
             required
           />
         </div>
         <div className="nutrition-input-group">
-          <label htmlFor="calories">Lượng calo (kcal)</label>
+          <label htmlFor="bmiRange">BMI Range</label>
           <input
-            type="number"
-            id="calories"
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-            placeholder="Nhập lượng calo"
+            type="text"
+            id="bmiRange"
+            name="bmiRange"
+            value={formData.bmiRange}
+            onChange={handleChange}
+            placeholder="Enter BMI range"
             required
           />
         </div>
         <div className="nutrition-input-group">
-          <label htmlFor="protein">Protein (g)</label>
-          <input
-            type="number"
-            id="protein"
-            value={protein}
-            onChange={(e) => setProtein(e.target.value)}
-            placeholder="Nhập lượng protein"
+          <label htmlFor="activityLevel">Activity Level</label>
+          <select
+            id="activityLevel"
+            name="activityLevel"
+            value={formData.activityLevel}
+            onChange={handleChange}
             required
-          />
+          >
+            <option value="">Select Activity Level</option>
+            <option value="Cao">Cao</option>
+            <option value="Trung bình">Trung bình</option>
+            <option value="Ít">Ít</option>
+          </select>
         </div>
         <div className="nutrition-input-group">
-          <label htmlFor="carbs">Carbs (g)</label>
-          <input
-            type="number"
-            id="carbs"
-            value={carbs}
-            onChange={(e) => setCarbs(e.target.value)}
-            placeholder="Nhập lượng carbs"
+          <label htmlFor="goal">Goal</label>
+          <select
+            id="goal"
+            name="goal"
+            value={formData.goal}
+            onChange={handleChange}
             required
-          />
+          >
+            <option value="">Select Goal</option>
+            <option value="Tăng cân">Tăng cân</option>
+            <option value="Giữ nguyên">Giữ nguyên</option>
+            <option value="Giảm cân">Giảm cân</option>
+          </select>
         </div>
-        <div className="nutrition-input-group">
-          <label htmlFor="fat">Chất béo (g)</label>
-          <input
-            type="number"
-            id="fat"
-            value={fat}
-            onChange={(e) => setFat(e.target.value)}
-            placeholder="Nhập lượng chất béo"
-            required
-          />
-        </div>
+        {[
+          "calories",
+          "protein",
+          "carbs",
+          "fat",
+          "fiber",
+          "vitaminA",
+          "vitaminB",
+          "vitaminC",
+          "vitaminD",
+          "vitaminE",
+          "calcium",
+          "iron",
+          "magnesium",
+          "omega3",
+          "sugars",
+          "cholesterol",
+          "sodium",
+        ].map((key) => (
+          <div className="nutrition-input-group" key={key}>
+            <label htmlFor={key}>
+              {key.replace(/([A-Z])/g, " $1").toUpperCase()}
+            </label>
+            <input
+              type="number"
+              id={key}
+              name={key}
+              value={formData[key]}
+              onChange={handleChange}
+              placeholder={`Enter ${key}`}
+            />
+          </div>
+        ))}
         <div className="nutrition-create-button">
-          <button type="submit">Tạo tiêu chí</button>
+          <button type="submit">Create Nutrition Criteria</button>
         </div>
       </form>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
@@ -13,6 +13,7 @@ import IconButton from "@mui/material/IconButton";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function descendingComparator(a, b, orderBy) {
@@ -45,11 +46,13 @@ function EnhancedTableHead(props) {
   };
 
   const columns = [
-    { id: "articleId", label: "Article ID" },
-    { id: "title", label: "Title" },
-    { id: "authorName", label: "Author" },
-    { id: "status", label: "Status" },
-    // { id: "moderateDate", label: "Moderate Date" },
+    { id: "criteriaId", label: "Criteria ID" },
+    { id: "gender", label: "Gender" },
+    { id: "ageRange", label: "Age Range" },
+    { id: "bmiRange", label: "BMI Range" },
+    { id: "profession", label: "Profession" },
+    { id: "activityLevel", label: "Activity Level" },
+    { id: "goal", label: "Goal" },
   ];
 
   return (
@@ -86,12 +89,35 @@ EnhancedTableHead.propTypes = {
   orderBy: PropTypes.string.isRequired,
 };
 
-export default function EnhancedTable({ rows }) {
+export default function NutritionCriteriaTable() {
   const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("articleId");
+  const [orderBy, setOrderBy] = useState("criteriaId");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [criteriaList, setCriteriaList] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchNutritionCriteria = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.get(
+          "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/nutritionCriterions/allNutritionCriteria",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setCriteriaList(response.data);
+      } catch (error) {
+        console.error("Error fetching nutrition criteria:", error);
+        alert("Unable to fetch nutrition criteria data.");
+      }
+    };
+
+    fetchNutritionCriteria();
+  }, []);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -109,7 +135,7 @@ export default function EnhancedTable({ rows }) {
   };
 
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - criteriaList.length) : 0;
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -122,34 +148,23 @@ export default function EnhancedTable({ rows }) {
               onRequestSort={handleRequestSort}
             />
             <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
+              {stableSort(criteriaList, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row) => (
-                  <TableRow hover key={row.articleId}>
-                    <TableCell>{row.articleId}</TableCell>
-                    <TableCell>
-                      <span
-                        style={{
-                          display: "block",
-                          width: "200px",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                        title={row.title}
-                      >
-                        {row.title}
-                      </span>
-                    </TableCell>
-                    <TableCell>{row.authorName}</TableCell>
-                    <TableCell>
-                      {row.status === "accepted" ? "Accepted" : "Rejected"}
-                    </TableCell>
-                    {/* <TableCell>{row.moderateDate || "N/A"}</TableCell> */}
+                  <TableRow hover key={row.criteriaId}>
+                    <TableCell>{row.criteriaId}</TableCell>
+                    <TableCell>{row.gender}</TableCell>
+                    <TableCell>{row.ageRange}</TableCell>
+                    <TableCell>{row.bmiRange}</TableCell>
+                    <TableCell>{row.profession}</TableCell>
+                    <TableCell>{row.activityLevel}</TableCell>
+                    <TableCell>{row.goal}</TableCell>
                     <TableCell align="right">
                       <IconButton
                         onClick={() =>
-                          navigate(`/article-detail/${row.articleId}`)
+                          navigate(
+                            `/nutritionCriteria-detail/${row.criteriaId}`
+                          )
                         }
                         color="primary"
                       >
@@ -169,7 +184,7 @@ export default function EnhancedTable({ rows }) {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={rows.length}
+          count={criteriaList.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

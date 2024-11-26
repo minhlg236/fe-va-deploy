@@ -173,7 +173,7 @@ export default function ArticleTable({ rows }) {
                         ? "Pending"
                         : row.status === "accepted"
                         ? "Accepted"
-                        : "Unaccepted"}
+                        : "Rejected"}
                     </TableCell>
                     <TableCell align="right">
                       <IconButton
