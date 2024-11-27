@@ -99,7 +99,7 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
-export default function OrderTable({ rows, handleDeleteClick }) {
+export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("orderId");
   const [selected, setSelected] = useState([]);
@@ -131,12 +131,21 @@ export default function OrderTable({ rows, handleDeleteClick }) {
     setPage(0);
   };
 
-  const handleUpdateStatus = async (orderId, newStatus) => {
+  const handleUpdateStatus = async (orderId, newStatus, userId) => {
     try {
+      console.log("userId:", userId);
+      console.log("orderId:", orderId);
+
       const token = localStorage.getItem("authToken");
-      await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/updateStatusOrderByOrderId/${orderId}`,
-        newStatus,
+      if (!token) {
+        alert("Authentication token missing. Please log in again.");
+        return;
+      }
+
+      // Step 1: Update order status
+      const updateStatusResponse = await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/updateStatusOrderByOrderId/${orderId}?newStatus=${newStatus}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -144,11 +153,48 @@ export default function OrderTable({ rows, handleDeleteClick }) {
           },
         }
       );
-      alert("Order status updated successfully!");
-      window.location.reload(); // Tải lại trang
+
+      if (updateStatusResponse.status === 200) {
+        alert("Order status updated successfully!");
+
+        // Step 2: If status is 'delivered', update user points
+        if (newStatus === "delivered") {
+          const changePointResponse = await axios.put(
+            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${userId}/10`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (changePointResponse.status === 200) {
+            return;
+          } else {
+            return;
+          }
+        }
+
+        // Step 3: Update local state for orders
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.orderId === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+      } else {
+        alert("Failed to update order status.");
+      }
     } catch (error) {
-      console.error("Error updating order status:", error);
-      alert("Failed to update order status. Please try again.");
+      console.error(
+        "Error updating order status:",
+        error.response?.data || error.message
+      );
+      alert(
+        error.response?.data?.errors?.[0]?.message ||
+          "An error occurred. Please try again."
+      );
     }
   };
 
@@ -222,7 +268,11 @@ export default function OrderTable({ rows, handleDeleteClick }) {
                         <Select
                           value={row.status}
                           onChange={(e) =>
-                            handleUpdateStatus(row.orderId, e.target.value)
+                            handleUpdateStatus(
+                              row.orderId,
+                              e.target.value,
+                              row.userId
+                            )
                           }
                         >
                           {[

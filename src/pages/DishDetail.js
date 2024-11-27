@@ -307,6 +307,18 @@ const DishDetail = () => {
                 <p>{dish.description}</p>
               )}
             </div>
+            <div>
+              <label>Cách làm:</label>
+              {isEditing ? (
+                <textarea
+                  name="recipe"
+                  value={dish.recipe}
+                  onChange={handleChange}
+                />
+              ) : (
+                <p>{dish.recipe}</p>
+              )}
+            </div>
 
             <div>
               <label>Image:</label>

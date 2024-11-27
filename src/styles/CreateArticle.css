@@ -1,51 +1,57 @@
 .create-article-container {
-    max-width: 600px;
-    margin: 50px auto;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
-.create-article-container h2 {
-    text-align: center;
-    margin-bottom: 20px;
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.article-input-group {
-    margin-bottom: 15px;
+.article-input-group,
+.article-body-group {
+  margin-bottom: 20px;
 }
 
-.article-input-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
-.article-input-group input,
-.article-input-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+input,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
 }
 
-.article-create-button {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+textarea {
+  min-height: 100px;
 }
 
+.add-body-button,
 .article-create-button button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #28a745;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
+.add-body-button:hover,
 .article-create-button button:hover {
-    background-color: #45a049;
+  background-color: #218838;
 }

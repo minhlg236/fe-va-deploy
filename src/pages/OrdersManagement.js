@@ -146,6 +146,7 @@ const OrdersManagement = () => {
             rows={filteredOrders}
             handleRowClick={handleRowClick} // Pass handler for row click
             handleDeleteClick={handleDeleteClick}
+            setOrders={setOrders}
           />
         )}
       </div>
