@@ -17,6 +17,21 @@ const DishDetail = () => {
   const [ingredientWeight, setIngredientWeight] = useState(""); // Khối lượng nguyên liệu
   const [isAddingIngredient, setIsAddingIngredient] = useState(false); // Trạng thái đang thêm nguyên liệu
 
+  const [searchTerm, setSearchTerm] = useState(""); // Giá trị tìm kiếm
+  const [filteredIngredients, setFilteredIngredients] = useState([]); // Kết quả tìm kiếm
+
+  // Xử lý tìm kiếm theo thời gian thực
+  useEffect(() => {
+    if (searchTerm) {
+      const results = allIngredients.filter((ingredient) =>
+        ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredIngredients(results);
+    } else {
+      setFilteredIngredients([]);
+    }
+  }, [searchTerm, allIngredients]);
+
   useEffect(() => {
     const fetchDishDetails = async () => {
       try {
@@ -429,6 +444,59 @@ const DishDetail = () => {
               Save Changes
             </button>
           )}
+
+          <div className="add-ingredient-form">
+            <h3>Add New Ingredient</h3>
+            <label>
+              Search Ingredient:
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search for ingredients..."
+              />
+            </label>
+
+            {filteredIngredients.length > 0 ? (
+              <ul className="ingredient-search-results">
+                {filteredIngredients.map((ingredient) => (
+                  <li
+                    key={ingredient.ingredientId}
+                    onClick={() => {
+                      setSelectedIngredient(ingredient.ingredientId);
+                      setSearchTerm(ingredient.name); // Đặt tên đã chọn vào trường tìm kiếm
+                      setFilteredIngredients([]); // Xóa kết quả sau khi chọn
+                    }}
+                    style={{
+                      cursor: "pointer",
+                      padding: "5px",
+                      borderBottom: "1px solid #ccc",
+                    }}
+                  >
+                    {ingredient.name}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              searchTerm && <p>No results found for "{searchTerm}"</p>
+            )}
+
+            <label>
+              Weight (g):
+              <input
+                type="number"
+                value={ingredientWeight}
+                onChange={(e) => setIngredientWeight(e.target.value)}
+              />
+            </label>
+
+            <div>
+              <button onClick={handleAddIngredient}>Add</button>
+              <button onClick={() => setIsAddingIngredient(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
