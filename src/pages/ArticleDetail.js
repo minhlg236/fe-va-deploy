@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 // import Lightbox from "react-image-lightbox"; // Thêm thư viện Lightbox
-import "react-image-lightbox/style.css";
+// import "react-image-lightbox/style.css";
 import "../styles/ArticleDetail.css";
 
 const ArticleDetail = () => {
