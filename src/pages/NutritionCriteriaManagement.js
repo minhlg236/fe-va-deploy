@@ -83,28 +83,28 @@ const Sidebar = () => {
         className="sidebar-item"
         onClick={() => navigate("/dishes-management")}
       >
-        Manage Dishes
+        Quản lý món ăn
       </div>
       <div
         className="sidebar-item"
         onClick={() => navigate("/nutritionCriteria-management")}
       >
-        Manage Nutrition Criteria
+        Quản lí thể trạng
       </div>
       <div
         className="sidebar-item"
         onClick={() => navigate("/Ingredient-management")}
       >
-        Manage Ingredients
+        Quản lí nguyên liệu
       </div>
       <div
         className="sidebar-item"
         onClick={() => navigate("/articles-management")}
       >
-        Manage Articles
+        Quản lí bài viết
       </div>
       <div className="sidebar-item logout" onClick={handleLogout}>
-        Logout
+        Đăng xuất
       </div>
     </div>
   );
