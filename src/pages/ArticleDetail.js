@@ -389,7 +389,7 @@ const ArticleDetail = () => {
               ) : (
                 <>
                   <div>
-                    <label>Tiêu đề:</label>
+                    <label>Tiêu đề :</label>
                     <p>{article.title}</p>
                   </div>
 
