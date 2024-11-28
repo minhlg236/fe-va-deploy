@@ -106,13 +106,6 @@ textarea {
   border-radius: 5px;
 }
 
-.lightbox-image {
-  width: auto;
-  height: auto;
-  max-width: 90%;
-  max-height: 90%;
-}
-
 .body-container {
   margin-top: 20px;
   padding: 10px;
