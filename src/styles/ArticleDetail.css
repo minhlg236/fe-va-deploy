@@ -98,8 +98,8 @@ textarea {
 .article-images img,
 .thumbnail,
 .body-thumbnail {
-  max-width: 150px; /* Kích thước ảnh nhỏ */
-  max-height: 100px; /* Kích thước ảnh nhỏ */
+  width: 200px; /* Kích thước ảnh nhỏ */
+  height: 200px; /* Kích thước ảnh nhỏ */
   object-fit: cover; /* Ảnh thu gọn mà không bị méo */
   margin: 5px; /* Khoảng cách giữa các ảnh nhỏ */
   cursor: pointer; /* Hiệu ứng chuột */

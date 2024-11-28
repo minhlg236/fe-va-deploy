@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Lightbox from "react-image-lightbox"; // Thêm thư viện Lightbox
+// import Lightbox from "react-image-lightbox"; // Thêm thư viện Lightbox
 import "react-image-lightbox/style.css";
 import "../styles/ArticleDetail.css";
 
@@ -12,7 +12,7 @@ const ArticleDetail = () => {
   const [articleBodies, setArticleBodies] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingBodyIndex, setEditingBodyIndex] = useState(-1); // Chỉnh sửa nội dung bài viết
-  const [lightboxImage, setLightboxImage] = useState(null); // Để xem ảnh lớn hơn
+  // const [lightboxImage, setLightboxImage] = useState(null); // Để xem ảnh lớn hơn
   const [moderateDate, setModerateDate] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -235,10 +235,10 @@ const ArticleDetail = () => {
     }
   };
 
-  // Hiển thị hình ảnh trong Lightbox
-  const handleImageClick = (imageUrl) => {
-    setLightboxImage(imageUrl);
-  };
+  // // Hiển thị hình ảnh trong Lightbox
+  // const handleImageClick = (imageUrl) => {
+  //   setLightboxImage(imageUrl);
+  // };
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
@@ -376,7 +376,7 @@ const ArticleDetail = () => {
                           src={image.imageUrl}
                           alt="Article"
                           className="thumbnail"
-                          onClick={() => handleImageClick(image.imageUrl)}
+                          // onClick={() => handleImageClick(image.imageUrl)}
                         />
                       ))}
                     </div>
@@ -509,7 +509,7 @@ const ArticleDetail = () => {
                             src={body.imageUrl}
                             alt="Body"
                             className="thumbnail"
-                            onClick={() => handleImageClick(body.imageUrl)}
+                            // onClick={() => handleImageClick(body.imageUrl)}
                           />
                         )}
                         <button onClick={() => setEditingBodyIndex(index)}>
@@ -522,12 +522,6 @@ const ArticleDetail = () => {
               </div>
 
               {/* Lightbox hiển thị ảnh lớn */}
-              {lightboxImage && (
-                <Lightbox
-                  mainSrc={lightboxImage}
-                  onCloseRequest={() => setLightboxImage(null)}
-                />
-              )}
             </div>
           ) : (
             <p>Đang tải thông tin bài viết...</p>
