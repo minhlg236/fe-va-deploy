@@ -139,3 +139,25 @@ button {
 .reject-button:hover {
   background-color: #8b0000; /* Màu đỏ đậm hơn */
 }
+.article-content {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  align-items: center;
+}
+
+.article-content iframe {
+  width: 100%; /* Video sẽ chiếm toàn bộ chiều rộng */
+  max-width: 800px; /* Đặt chiều rộng tối đa để video không quá to */
+  height: auto; /* Tự động điều chỉnh chiều cao theo tỷ lệ */
+  margin: 20px auto; /* Căn giữa video */
+  display: block; /* Đảm bảo video là một block element */
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.article-content figure {
+  margin: 16px 0;
+}
