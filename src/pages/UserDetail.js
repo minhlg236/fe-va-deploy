@@ -45,8 +45,13 @@ const UserDetail = () => {
       if (!confirmUpdate) return;
 
       await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer${user.userId}`,
-        user
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/${user.userId}`,
+        user,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Add auth header
+          },
+        }
       );
       alert("Cập nhật thông tin thành công!");
       setIsEditing(false); // Exit editing mode
