@@ -233,11 +233,10 @@ const ArticleDetail = () => {
     }
   };
 
-  const handleModerateArticle = async (status) => {
+  const handleChangeStatus = async (newStatus) => {
     try {
-      // Cập nhật trạng thái bài viết
       await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/updateArticleStatusByArticleId/${article.articleId}?newStatus=${status}`,
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/updateArticleStatusByArticleId/${article.articleId}?newStatus=${newStatus}`,
         {},
         {
           headers: {
@@ -247,23 +246,13 @@ const ArticleDetail = () => {
         }
       );
 
-      if (status === "accepted") {
-        // Nếu trạng thái là "accepted", gọi API cộng điểm
-        await axios.put(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${article.authorId}/10`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          }
-        );
-        alert("Bài viết đã được duyệt và điểm đã được cộng cho tác giả!");
-      } else {
-        alert("Bài viết đã bị từ chối!");
-      }
+      alert(
+        newStatus === "accepted"
+          ? "Bài viết đã được chấp nhận!"
+          : "Bài viết đã bị từ chối!"
+      );
 
-      // Tải lại thông tin bài viết sau khi cập nhật
+      // Refresh the article data after status change
       const response = await axios.get(
         `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/Article/${id}`,
         {
@@ -272,15 +261,10 @@ const ArticleDetail = () => {
           },
         }
       );
-
-      setArticle(response.data); // Cập nhật bài viết với trạng thái mới
-      setModerateDate(response.data.moderateDate); // Cập nhật ngày duyệt nếu có
+      setArticle(response.data);
     } catch (error) {
-      console.error(
-        "Lỗi khi cập nhật trạng thái bài viết hoặc cộng điểm:",
-        error
-      );
-      alert("Không thể cập nhật trạng thái bài viết hoặc cộng điểm.");
+      console.error("Error changing article status:", error);
+      alert("Không thể thay đổi trạng thái bài viết. Vui lòng thử lại.");
     }
   };
 
@@ -836,6 +820,22 @@ const ArticleDetail = () => {
             </div>
           ) : (
             <p>Đang tải thông tin bài viết...</p>
+          )}
+          {roleId === 4 && (
+            <div className="moderator-actions">
+              <button
+                className="accept-button"
+                onClick={() => handleChangeStatus("accepted")}
+              >
+                Chấp nhận bài viết
+              </button>
+              <button
+                className="reject-button"
+                onClick={() => handleChangeStatus("rejected")}
+              >
+                Từ chối bài viết
+              </button>
+            </div>
           )}
         </div>
       </div>
