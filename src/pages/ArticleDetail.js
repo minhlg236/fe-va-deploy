@@ -246,11 +246,22 @@ const ArticleDetail = () => {
         }
       );
 
-      alert(
-        newStatus === "accepted"
-          ? "Bài viết đã được chấp nhận!"
-          : "Bài viết đã bị từ chối!"
-      );
+      if (newStatus === "accepted") {
+        // Gọi API để tăng điểm
+        await axios.put(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${article.authorId}/20`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+
+        alert("Bài viết đã được chấp nhận và cộng 20 điểm cho tác giả!");
+      } else {
+        alert("Bài viết đã bị từ chối!");
+      }
 
       // Refresh the article data after status change
       const response = await axios.get(
