@@ -17,6 +17,12 @@ const Header = ({ activeTab, setActiveTab }) => {
         >
           Hệ thống
         </button>
+        <button
+          className={`tab ${activeTab === "Banned" ? "active" : ""}`}
+          onClick={() => setActiveTab("Banned")}
+        >
+          Bị ban
+        </button>
       </div>
     </div>
   );

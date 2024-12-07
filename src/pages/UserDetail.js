@@ -24,7 +24,7 @@ const UserDetail = () => {
           `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/users/GetUserByID/${id}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Thêm token vào header
+              Authorization: `Bearer ${token}`, // Add auth token to header
             },
           }
         );
@@ -44,15 +44,31 @@ const UserDetail = () => {
       const confirmUpdate = window.confirm("Bạn có chắc chắn muốn cập nhật?");
       if (!confirmUpdate) return;
 
+      // Prepare the payload with all required fields
+      const updatedUser = {
+        userId: user.userId, // Ensure the ID is included
+        username: user.username,
+        password: user.password || "", // Ensure password is not null
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        gender: user.gender,
+        status: user.status, // Update status
+        roleId: user.roleId, // Update role ID
+      };
+
+      // Call the updateStaff API
       await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/${user.userId}`,
-        user,
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/users/updateStaff`,
+        updatedUser,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Add auth header
+            "Content-Type": "application/json",
           },
         }
       );
+
       alert("Cập nhật thông tin thành công!");
       setIsEditing(false); // Exit editing mode
     } catch (error) {
@@ -107,60 +123,69 @@ const UserDetail = () => {
             )}
 
             <label>Mật khẩu:</label>
-            {isEditing ? (
+            {isEditing && user.roleId !== 3 ? (
               <input
                 type="password"
                 name="password"
+                value={user.username}
                 placeholder="Nhập mật khẩu mới"
                 onChange={handleChange}
               />
             ) : (
-              <p>******</p>
+              <p>{user.username}</p>
             )}
 
             <label>Email:</label>
-            {isEditing ? (
-              <input type="email" name="email" value={user.email} readOnly />
+            {isEditing && user.roleId !== 3 ? (
+              <input
+                type="email"
+                name="email"
+                value={user.email}
+                onChange={handleChange}
+              />
             ) : (
               <p>{user.email}</p>
             )}
 
             <label>SĐT:</label>
-            {isEditing ? (
+            {isEditing && user.roleId !== 3 ? (
               <input
                 type="text"
                 name="phoneNumber"
                 value={user.phoneNumber}
-                readOnly
-                // onChange={handleChange}
+                onChange={handleChange}
               />
             ) : (
               <p>{user.phoneNumber}</p>
             )}
 
-            <label>Địa chỉ:</label>
+            <label>Trạng thái:</label>
             {isEditing ? (
-              <input
-                type="text"
-                name="address"
-                value={user.address}
-                onChange={handleChange}
-              />
+              <select name="status" value={user.status} onChange={handleChange}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
             ) : (
-              <p>{user.address}</p>
+              <p>{user.status === "active" ? "Active" : "Inactive"}</p>
             )}
 
-            <label>Giới tính:</label>
+            <label>Vai trò:</label>
             {isEditing ? (
-              <input
-                type="text"
-                name="gender"
-                value={user.gender}
-                onChange={handleChange}
-              />
+              <select name="roleId" value={user.roleId} onChange={handleChange}>
+                <option value={3}>Customer</option>
+                <option value={2}>Staff</option>
+                <option value={4}>Moderator</option>
+                <option value={5}>Admin</option>
+              </select>
             ) : (
-              <p>{user.gender}</p>
+              <p>{user.roleId}</p>
             )}
+
+            <label>Địa chỉ:</label>
+            <p>{user.address}</p>
+
+            <label>Giới tính:</label>
+            <p>{user.gender}</p>
           </div>
 
           {isEditing && (

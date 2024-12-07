@@ -15,15 +15,16 @@ const AdminPage = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
 
   // Fetch users
+  // Fetch users based on the active tab
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem("authToken"); // Lấy token từ localStorage
+        const token = localStorage.getItem("authToken");
         const response = await axios.get(
           "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/users/alluser",
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Thêm header Authorization
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -31,10 +32,17 @@ const AdminPage = () => {
         let fetchedUsers = response.data;
 
         if (activeTab === "Customer") {
-          fetchedUsers = fetchedUsers.filter((user) => user.roleId === 3);
+          fetchedUsers = fetchedUsers.filter(
+            (user) => user.roleId === 3 && user.status === "active"
+          );
         } else if (activeTab === "system") {
-          fetchedUsers = fetchedUsers.filter((user) =>
-            [2, 5, 4].includes(user.roleId)
+          fetchedUsers = fetchedUsers.filter(
+            (user) =>
+              [2, 5, 4].includes(user.roleId) && user.status === "active"
+          );
+        } else if (activeTab === "Banned") {
+          fetchedUsers = fetchedUsers.filter(
+            (user) => user.status === "inactive"
           );
         }
 
@@ -44,7 +52,7 @@ const AdminPage = () => {
         console.error("Error fetching users:", error);
         if (error.response && error.response.status === 401) {
           alert("Bạn không có quyền truy cập. Vui lòng đăng nhập lại!");
-          navigate("/"); // Chuyển hướng về trang đăng nhập
+          navigate("/");
         }
       }
     };
@@ -56,35 +64,40 @@ const AdminPage = () => {
   useEffect(() => {
     const filtered = users.filter(
       (user) =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.username?.toLowerCase() || "").includes(
+          (searchTerm || "").toLowerCase()
+        ) ||
+        (user.phoneNumber?.toLowerCase() || "").includes(
+          (searchTerm || "").toLowerCase()
+        ) ||
+        (user.email?.toLowerCase() || "").includes(
+          (searchTerm || "").toLowerCase()
+        )
     );
     setFilteredUsers(filtered);
   }, [searchTerm, users]);
 
-  const handleDeleteClick = async (userId) => {
+  const handleDelete = async (userId, currentStatus) => {
+    if (currentStatus === "inactive") {
+      alert("User đã bị ban trước đó.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/users/GetUserByID/${userId}`,
-        {
-          status: "inactive",
-        },
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/users/updateStaff`,
+        { userId, status: "inactive" },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Thêm header Authorization
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.userId === userId ? { ...user, status: "inactive" } : user
-        )
-      );
+      alert("User đã được chuyển sang trạng thái bị ban!");
     } catch (error) {
       console.error("Error updating user status:", error);
+      alert("Không thể cập nhật trạng thái user.");
     }
   };
 
@@ -106,10 +119,7 @@ const AdminPage = () => {
             Create
           </button>
         </div>
-        <EnhancedTable
-          rows={filteredUsers}
-          handleDeleteClick={handleDeleteClick}
-        />
+        <EnhancedTable rows={filteredUsers} />
       </div>
     </div>
   );
