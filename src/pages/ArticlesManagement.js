@@ -86,11 +86,41 @@ const ArticlesManagement = () => {
         <EnhancedTable
           rows={filteredArticles.map((article) => ({
             articleId: article.articleId,
-            title: article.title,
-            content:
-              article.content.length > 100
-                ? article.content.slice(0, 100) + "..."
-                : article.content,
+            title: (
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontFamily: "Arial, sans-serif",
+                  color: "#333",
+                  lineHeight: "1.5",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "200px",
+                }}
+                dangerouslySetInnerHTML={{ __html: article.title }}
+              />
+            ),
+            content: (
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontFamily: "Arial, sans-serif",
+                  color: "#333",
+                  lineHeight: "1.5",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "300px",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html:
+                    article.content.length > 100
+                      ? article.content.slice(0, 100) + "..."
+                      : article.content,
+                }}
+              />
+            ),
             authorName: article.authorName,
             imageUrl: article.imageUrl,
             status: article.status,

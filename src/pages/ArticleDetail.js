@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-// import Lightbox from "react-image-lightbox"; // Thêm thư viện Lightbox
-// import "react-image-lightbox/style.css";
 import "../styles/ArticleDetail.css";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
@@ -24,6 +22,7 @@ const ArticleDetail = () => {
   const [moderateDate, setModerateDate] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(""); // URL ảnh được chọn
+  const [zoomLevel, setZoomLevel] = useState(1); // Tỷ lệ phóng to ban đầu
 
   const CLOUD_NAME = "dpzzzifpa";
   const UPLOAD_PRESET = "vegetarian assistant";
@@ -555,6 +554,14 @@ const ArticleDetail = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false); // Đóng modal
   };
+  //zomin zommout image
+  const handleZoomIn = () => {
+    setZoomLevel((prevZoom) => Math.min(prevZoom + 0.1, 3)); // Tăng tỷ lệ (tối đa 3)
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((prevZoom) => Math.max(prevZoom - 0.1, 0.5)); // Giảm tỷ lệ (tối thiểu 0.5)
+  };
 
   const replaceOembedWithIframe = (htmlContent) => {
     if (!htmlContent) return htmlContent;
@@ -777,7 +784,28 @@ const ArticleDetail = () => {
                           src={currentImage}
                           alt="Zoomed"
                           className="popup-image"
+                          style={{ transform: `scale(${zoomLevel})` }} // Áp dụng tỷ lệ phóng to
                         />
+                        <div className="zoom-controls">
+                          <button
+                            className="zoom-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleZoomIn();
+                            }}
+                          >
+                            +
+                          </button>
+                          <button
+                            className="zoom-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleZoomOut();
+                            }}
+                          >
+                            -
+                          </button>
+                        </div>
                         <button
                           className="popup-close-button"
                           onClick={handleCloseModal}

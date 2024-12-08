@@ -1,20 +1,24 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import Box from "@mui/material/Box";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import {
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Paper,
+  Checkbox,
+  IconButton,
+} from "@mui/material";
+import {
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+  ArrowDropUp as ArrowDropUpIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 function descendingComparator(a, b, orderBy) {
@@ -43,9 +47,9 @@ function DishTableHead({
   order,
   orderBy,
   onRequestSort,
+  onSelectAllClick,
   numSelected,
   rowCount,
-  onSelectAllClick,
 }) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
@@ -75,19 +79,17 @@ function DishTableHead({
           <TableCell
             key={column.id}
             sortDirection={orderBy === column.id ? order : false}
-            style={{ cursor: "pointer" }}
             onClick={createSortHandler(column.id)}
+            style={{ cursor: "pointer" }}
           >
-            <span style={{ display: "flex", alignItems: "center" }}>
-              {column.label}
-              {orderBy === column.id ? (
-                order === "asc" ? (
-                  <ArrowDropUpIcon fontSize="small" />
-                ) : (
-                  <ArrowDropDownIcon fontSize="small" />
-                )
-              ) : null}
-            </span>
+            {column.label}
+            {orderBy === column.id ? (
+              order === "asc" ? (
+                <ArrowDropUpIcon fontSize="small" />
+              ) : (
+                <ArrowDropDownIcon fontSize="small" />
+              )
+            ) : null}
           </TableCell>
         ))}
         <TableCell align="right">Actions</TableCell>
@@ -139,14 +141,11 @@ export default function DishTable({ dishes, handleDeleteClick }) {
 
   const isSelected = (id) => selected.indexOf(id) !== -1;
 
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - dishes.length) : 0;
-
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <TableContainer>
-          <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
+          <Table>
             <DishTableHead
               numSelected={selected.length}
               order={order}
@@ -196,9 +195,6 @@ export default function DishTable({ dishes, handleDeleteClick }) {
                             }
                             setSelected(newSelected);
                           }}
-                          inputProps={{
-                            "aria-labelledby": `enhanced-table-checkbox-${dish.dishId}`,
-                          }}
                         />
                       </TableCell>
                       <TableCell>{dish.dishId}</TableCell>
@@ -215,8 +211,6 @@ export default function DishTable({ dishes, handleDeleteClick }) {
                         </IconButton>
                         <IconButton
                           onClick={() => navigate(`/dish/${dish.dishId}`)}
-                          color="primary"
-                          style={{ marginLeft: "10px" }}
                         >
                           <VisibilityIcon />
                         </IconButton>
@@ -224,11 +218,6 @@ export default function DishTable({ dishes, handleDeleteClick }) {
                     </TableRow>
                   );
                 })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: 53 * emptyRows }}>
-                  <TableCell colSpan={7} />
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -245,4 +234,3 @@ export default function DishTable({ dishes, handleDeleteClick }) {
     </Box>
   );
 }
-    
