@@ -22,6 +22,9 @@ const ArticleDetail = () => {
   const [newBodyImage, setNewBodyImage] = useState(""); // Ảnh của nội dung mới
 
   const [moderateDate, setModerateDate] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(""); // URL ảnh được chọn
+
   const CLOUD_NAME = "dpzzzifpa";
   const UPLOAD_PRESET = "vegetarian assistant";
 
@@ -149,6 +152,75 @@ const ArticleDetail = () => {
         error.response?.data || error.message
       );
       alert("Không thể upload ảnh. Vui lòng kiểm tra lại.");
+    }
+  };
+
+  const handleDeleteBodyImage = async (bodyId, imageUrl) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh này?")) return;
+
+    try {
+      const updatedBody = {
+        ...articleBodies.find((body) => body.bodyId === bodyId),
+        imageUrl: "", // Xóa URL ảnh
+      };
+
+      // Cập nhật thông tin body lên server
+      await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${bodyId}`,
+        updatedBody,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      alert("Xóa ảnh thành công!");
+      setArticleBodies((prev) =>
+        prev.map((body) =>
+          body.bodyId === bodyId ? { ...body, imageUrl: "" } : body
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi khi xóa ảnh:", error);
+      alert("Không thể xóa ảnh. Vui lòng thử lại.");
+    }
+  };
+
+  const handleHideBody = async (bodyId) => {
+    try {
+      const bodyToUpdate = articleBodies.find((body) => body.bodyId === bodyId);
+
+      if (!bodyToUpdate) {
+        alert("Không tìm thấy nội dung cần ẩn.");
+        return;
+      }
+
+      // Cập nhật position của body thành 0
+      const updatedBody = {
+        ...bodyToUpdate,
+        position: 0,
+      };
+
+      await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${bodyId}`,
+        updatedBody,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      alert("Ẩn nội dung thành công!");
+      setArticleBodies((prev) =>
+        prev.map((body) =>
+          body.bodyId === bodyId ? { ...body, position: 0 } : body
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi khi ẩn nội dung:", error);
+      alert("Không thể ẩn nội dung. Vui lòng thử lại.");
     }
   };
 
@@ -340,6 +412,39 @@ const ArticleDetail = () => {
     return maxPosition + 1; // Thêm 1 so với vị trí lớn nhất
   };
 
+  const handleUpdateBodyImage = async (bodyId, newFile) => {
+    try {
+      const newImageUrl = await handleUploadBodyImage(newFile);
+      if (!newImageUrl) {
+        alert("Upload ảnh thất bại. Vui lòng thử lại!");
+        return;
+      }
+
+      const updatedBody = {
+        ...articleBodies.find((b) => b.bodyId === bodyId),
+        imageUrl: newImageUrl,
+      };
+
+      await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${bodyId}`,
+        updatedBody,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      alert("Cập nhật ảnh trong nội dung thành công!");
+      setArticleBodies((prev) =>
+        prev.map((b) => (b.bodyId === bodyId ? updatedBody : b))
+      );
+    } catch (error) {
+      console.error("Lỗi khi cập nhật ảnh:", error);
+      alert("Không thể cập nhật ảnh.");
+    }
+  };
+
   const handleAddNewBody = async (content, file) => {
     try {
       let imageUrl = ""; // Initialize the image URL
@@ -439,6 +544,16 @@ const ArticleDetail = () => {
       console.error("Error updating body content:", error);
       alert("Unable to update content. Please try again.");
     }
+  };
+
+  //zoom , out image
+  const handleImageClick = (imageUrl) => {
+    setCurrentImage(imageUrl); // Lưu URL ảnh được chọn
+    setIsModalOpen(true); // Mở modal
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // Đóng modal
   };
 
   const replaceOembedWithIframe = (htmlContent) => {
@@ -610,6 +725,7 @@ const ArticleDetail = () => {
                             src={image.imageUrl}
                             alt={`Article Image ${image.articleImageId}`}
                             className="thumbnail"
+                            onClick={() => handleImageClick(image.imageUrl)} // Mở popup
                           />
                           {isEditing && (
                             <div className="image-actions">
@@ -654,50 +770,81 @@ const ArticleDetail = () => {
                     </div>
                   )}
 
+                  {isModalOpen && (
+                    <div className="popup-overlay" onClick={handleCloseModal}>
+                      <div className="popup-content">
+                        <img
+                          src={currentImage}
+                          alt="Zoomed"
+                          className="popup-image"
+                        />
+                        <button
+                          className="popup-close-button"
+                          onClick={handleCloseModal}
+                        >
+                          Đóng
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="article-bodies">
                     <h3>Nội dung chi tiết</h3>
-                    {articleBodies.map((body, index) => (
-                      <div key={body.bodyId} className="body-container">
-                        <CKEditor
-                          editor={ClassicEditor}
-                          config={{ licenseKey: licenseKey }}
-                          data={body.content}
-                          onChange={(event, editor) => {
-                            const data = editor.getData();
-                            setArticleBodies((prev) =>
-                              prev.map((b, i) =>
-                                i === index ? { ...b, content: data } : b
-                              )
-                            );
-                          }}
-                        />
-                        <div>
-                          <label>Image:</label>
-                          {body.imageUrl && (
-                            <img
-                              src={body.imageUrl}
-                              alt="Body"
-                              className="thumbnail"
-                            />
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
+                    {articleBodies
+                      .filter((body) => body.position !== 0)
+                      .map((body, index) => (
+                        <div key={body.bodyId} className="body-container">
+                          <CKEditor
+                            editor={ClassicEditor}
+                            config={{ licenseKey: licenseKey }}
+                            data={body.content}
+                            onChange={(event, editor) => {
+                              const data = editor.getData();
                               setArticleBodies((prev) =>
                                 prev.map((b, i) =>
-                                  i === index ? { ...b, newFile: file } : b
+                                  i === index ? { ...b, content: data } : b
                                 )
                               );
                             }}
                           />
+                          <div>
+                            <label>Image:</label>
+                            {body.imageUrl && (
+                              <img
+                                src={body.imageUrl}
+                                alt="Body"
+                                className="thumbnail"
+                                onClick={() => handleImageClick(body.imageUrl)} // Mở popup
+                              />
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                handleUpdateBodyImage(body.bodyId, file);
+                              }}
+                            />
+                          </div>
+
+                          <button onClick={() => handleSaveBody(index)}>
+                            Save
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteBodyImage(body.bodyId, body.imageUrl)
+                            }
+                          >
+                            Xóa ảnh
+                          </button>
+                          <button
+                            onClick={() => handleHideBody(body.bodyId)}
+                            className="hide-button"
+                          >
+                            Ẩn nội dung
+                          </button>
                         </div>
-                        <button onClick={() => handleSaveBody(index)}>
-                          Save
-                        </button>
-                      </div>
-                    ))}
+                      ))}
 
                     {isEditing && (
                       <div className="add-new-body">
@@ -782,6 +929,7 @@ const ArticleDetail = () => {
                           src={image.imageUrl}
                           alt={`Article Image ${image.articleImageId}`}
                           className="article-image"
+                          onClick={() => handleImageClick(image.articleImageId)} // Mở popup
                         />
                       ))}
                     </div>
@@ -799,29 +947,15 @@ const ArticleDetail = () => {
                             dangerouslySetInnerHTML={{ __html: body.content }}
                           ></div>
                           <div>
+                            <label>Image:</label>
                             {body.imageUrl && (
-                              <div>
-                                <img
-                                  src={body.imageUrl}
-                                  alt="Current Body Image"
-                                  className="thumbnail"
-                                />
-                              </div>
-                            )}
-                            <div>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files[0];
-                                  setArticleBodies((prev) =>
-                                    prev.map((b, i) =>
-                                      i === index ? { ...b, newFile: file } : b
-                                    )
-                                  );
-                                }}
+                              <img
+                                src={body.imageUrl}
+                                alt="Body"
+                                className="thumbnail"
+                                onClick={() => handleImageClick(body.imageUrl)} // Mở popup
                               />
-                            </div>
+                            )}
                           </div>
                         </div>
                       ))}

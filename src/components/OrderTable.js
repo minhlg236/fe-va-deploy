@@ -160,7 +160,7 @@ export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
         // Step 2: If status is 'delivered', update user points
         if (newStatus === "delivered") {
           const changePointResponse = await axios.put(
-            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${userId}/10`,
+            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${userId}/20`,
             {},
             {
               headers: {
