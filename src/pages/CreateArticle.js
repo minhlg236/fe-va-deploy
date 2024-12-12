@@ -157,6 +157,38 @@ const CreateArticle = () => {
     );
   };
 
+  class CustomUploadAdapter {
+    constructor(loader) {
+      this.loader = loader; // File từ CKEditor
+    }
+
+    async upload() {
+      const data = new FormData();
+      const file = await this.loader.file; // Lấy file từ CKEditor
+
+      data.append("file", file);
+      data.append("upload_preset", UPLOAD_PRESET); // Sử dụng preset đã tạo trên Cloudinary
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+
+      const result = await response.json();
+
+      return {
+        default: result.secure_url, // URL trả về để hiển thị trong CKEditor
+      };
+    }
+
+    abort() {
+      console.log("Upload bị hủy");
+    }
+  }
+
   return (
     <div className="create-article-container">
       <h2>Tạo bài viết mới</h2>
@@ -170,15 +202,38 @@ const CreateArticle = () => {
             onChange={(event, editor) => setTitle(editor.getData())}
           />
         </div>
-        <div className="article-input-group">
-          <label>Nội dung bài viết</label>
-          <CKEditor
-            editor={ClassicEditor}
-            config={{ licenseKey }}
-            data={content}
-            onChange={(event, editor) => setContent(editor.getData())}
-          />
-        </div>
+        <CKEditor
+          editor={ClassicEditor}
+          config={{
+            licenseKey,
+            extraPlugins: [
+              function CustomPlugin(editor) {
+                editor.plugins.get("FileRepository").createUploadAdapter = (
+                  loader
+                ) => {
+                  return new CustomUploadAdapter(loader);
+                };
+              },
+            ],
+            toolbar: [
+              "heading",
+              "|",
+              "bold",
+              "italic",
+              "link",
+              "bulletedList",
+              "numberedList",
+              "blockQuote",
+              "|",
+              "imageUpload", // Nút upload ảnh
+              "undo",
+              "redo",
+            ],
+          }}
+          data={content}
+          onChange={(event, editor) => setContent(editor.getData())}
+        />
+
         <div className="article-images">
           <h3>Hình ảnh chính</h3>
           <input
