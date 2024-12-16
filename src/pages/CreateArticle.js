@@ -15,7 +15,6 @@ const CreateArticle = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [articleImages, setArticleImages] = useState([]);
-  const [articleBodies, setArticleBodies] = useState([]);
   const navigate = useNavigate();
 
   const authorId =
@@ -24,7 +23,7 @@ const CreateArticle = () => {
       : null;
 
   const uploadImageToCloudinary = async (file) => {
-    if (!file) return ""; // Trả về chuỗi rỗng nếu không chọn file
+    if (!file) return "";
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -35,7 +34,7 @@ const CreateArticle = () => {
         formData
       );
 
-      return response.data.secure_url; // Trả về URL hình ảnh từ Cloudinary
+      return response.data.secure_url;
     } catch (error) {
       console.error("Lỗi khi upload ảnh:", error);
       alert("Không thể upload ảnh. Vui lòng thử lại.");
@@ -66,7 +65,7 @@ const CreateArticle = () => {
       content,
       status: "accepted",
       authorId: parseInt(authorId),
-      articleImages: uploadedImages.filter((url) => url), // Bỏ qua ảnh chưa upload được
+      articleImages: uploadedImages.filter((url) => url),
     };
 
     try {
@@ -81,34 +80,6 @@ const CreateArticle = () => {
         }
       );
 
-      const articleId = await fetchLatestArticleId();
-
-      // Tạo các article body nếu có
-      await Promise.all(
-        articleBodies.map(async (body, index) => {
-          const imageUrl = await uploadImageToCloudinary(body.imageUrl);
-          const bodyPayload = {
-            bodyId: 0,
-            articleId,
-            content: body.content,
-            imageUrl: imageUrl || "",
-            position: index + 2,
-            userId: parseInt(authorId),
-          };
-
-          await axios.post(
-            "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/createArticleBody",
-            bodyPayload,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-              },
-            }
-          );
-        })
-      );
-
       alert("Tạo bài viết thành công!");
       navigate("/articles-management");
     } catch (error) {
@@ -117,57 +88,19 @@ const CreateArticle = () => {
     }
   };
 
-  const fetchLatestArticleId = async () => {
-    try {
-      const response = await axios.get(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/getArticleByAuthorId/${authorId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-      const articles = response.data;
-      if (articles.length === 0) {
-        throw new Error("Không tìm thấy bài viết nào của tác giả.");
-      }
-
-      return articles[articles.length - 1].articleId; // Trả về bài viết mới nhất
-    } catch (error) {
-      console.error("Lỗi khi lấy bài viết mới nhất:", error);
-      throw new Error("Không thể lấy articleId.");
-    }
-  };
-
   const handleAddImage = (file) => setArticleImages([...articleImages, file]);
-
-  const handleAddBody = () =>
-    setArticleBodies([
-      ...articleBodies,
-      { content: "", imageUrl: null, position: articleBodies.length + 2 },
-    ]);
-
-  const handleBodyChange = (index, field, value) => {
-    setArticleBodies((prev) =>
-      prev.map((body, i) =>
-        i === index
-          ? { ...body, [field]: field === "imageUrl" ? value : value }
-          : body
-      )
-    );
-  };
 
   class CustomUploadAdapter {
     constructor(loader) {
-      this.loader = loader; // File từ CKEditor
+      this.loader = loader;
     }
 
     async upload() {
       const data = new FormData();
-      const file = await this.loader.file; // Lấy file từ CKEditor
+      const file = await this.loader.file;
 
       data.append("file", file);
-      data.append("upload_preset", UPLOAD_PRESET); // Sử dụng preset đã tạo trên Cloudinary
+      data.append("upload_preset", UPLOAD_PRESET);
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
@@ -180,7 +113,7 @@ const CreateArticle = () => {
       const result = await response.json();
 
       return {
-        default: result.secure_url, // URL trả về để hiển thị trong CKEditor
+        default: result.secure_url,
       };
     }
 
@@ -225,7 +158,7 @@ const CreateArticle = () => {
               "numberedList",
               "blockQuote",
               "|",
-              "imageUpload", // Nút upload ảnh
+              "imageUpload",
               "undo",
               "redo",
             ],
@@ -241,38 +174,6 @@ const CreateArticle = () => {
             accept="image/*"
             onChange={(e) => handleAddImage(e.target.files[0])}
           />
-        </div>
-        <div className="article-bodies">
-          <h3>Các phần nội dung khác</h3>
-          {articleBodies.map((body, index) => (
-            <div key={index} className="article-body-group">
-              <h4>Phần {index + 2}</h4>
-              <div>
-                <label>Nội dung:</label>
-                <CKEditor
-                  editor={ClassicEditor}
-                  config={{ licenseKey }}
-                  data={body.content}
-                  onChange={(event, editor) =>
-                    handleBodyChange(index, "content", editor.getData())
-                  }
-                />
-              </div>
-              <div>
-                <label>Ảnh:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    handleBodyChange(index, "imageUrl", e.target.files[0])
-                  }
-                />
-              </div>
-            </div>
-          ))}
-          <button type="button" onClick={handleAddBody}>
-            Thêm nội dung mới
-          </button>
         </div>
         <button type="submit">Tạo bài viết</button>
       </form>

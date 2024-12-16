@@ -27,7 +27,8 @@ import CreateArticle from "./pages/CreateArticle";
 import ArticleModerateManagement from "./pages/ArticleModerateManagement";
 import UserActivityManagement from "./pages/UserActivityManagement";
 import ModeratedArticles from "./pages/ModeratedArticles";
-
+import ShippingManagement from "./pages/ShippingManagement";
+import ShippingDetail from "./pages/ShippingDetail";
 // Hàm kiểm tra xác thực (JWT)
 const isAuthenticated = () => {
   const token = localStorage.getItem("authToken");
@@ -193,7 +194,22 @@ function App() {
             </PrivateRoute>
           }
         />
-
+        <Route
+          path="/shipping-management"
+          element={
+            <PrivateRoute roles={["Admin", "Staff"]}>
+              <ShippingManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/shipping-detail/:id"
+          element={
+            <PrivateRoute roles={["Admin", "Staff"]}>
+              <ShippingDetail />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/order-detail/:id"
           element={

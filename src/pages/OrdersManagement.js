@@ -171,6 +171,13 @@ const Sidebar = () => {
       >
         Quản lý đơn hàng
       </div>
+      <div
+        className="sidebar-item"
+        onClick={() => navigate("/shipping-management")}
+      >
+        Quản lý thông tin ship hàng
+      </div>
+
       <div className="sidebar-item logout" onClick={handleLogout}>
         Đăng xuất
       </div>

@@ -132,69 +132,86 @@ export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
   };
 
   const handleUpdateStatus = async (orderId, newStatus, userId) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      alert("Authentication token missing. Please log in again.");
+      return;
+    }
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
     try {
-      console.log("userId:", userId);
-      console.log("orderId:", orderId);
-
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        alert("Authentication token missing. Please log in again.");
-        return;
-      }
-
       // Step 1: Update order status
       const updateStatusResponse = await axios.put(
         `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/updateStatusOrderByOrderId/${orderId}?newStatus=${newStatus}`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        { headers }
       );
 
-      if (updateStatusResponse.status === 200) {
-        alert("Order status updated successfully!");
+      if (updateStatusResponse.status !== 200) {
+        alert("Failed to update order status.");
+        return;
+      }
 
-        // Step 2: If status is 'delivered', update user points
-        if (newStatus === "delivered") {
+      alert("Order status updated successfully!");
+
+      // Step 2: Call shipping API if status is 'delivering'
+      if (newStatus === "delivering") {
+        try {
+          const createShippingResponse = await axios.post(
+            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/shipping/create`,
+            { orderId },
+            { headers }
+          );
+
+          if (createShippingResponse.status === 200) {
+            alert("Shipping record created successfully!");
+          } else {
+            alert("Failed to create shipping record.");
+          }
+        } catch (shippingError) {
+          console.error("Error creating shipping record:", shippingError);
+          alert("Failed to create shipping record. Please try again.");
+          return;
+        }
+      }
+
+      // Step 3: Update user points if status is 'delivered'
+      if (newStatus === "delivered") {
+        try {
           const changePointResponse = await axios.put(
             `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${userId}/20`,
             {},
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
+            { headers }
           );
 
           if (changePointResponse.status === 200) {
-            return;
+            console.log("User points updated successfully.");
           } else {
-            return;
+            alert("Failed to update user points.");
           }
+        } catch (pointError) {
+          console.error("Error updating user points:", pointError);
+          alert("Failed to update user points. Please try again.");
+          return;
         }
-
-        // Step 3: Update local state for orders
-        setOrders((prevOrders) =>
-          prevOrders.map((order) =>
-            order.orderId === orderId ? { ...order, status: newStatus } : order
-          )
-        );
-      } else {
-        alert("Failed to update order status.");
       }
+
+      // Step 4: Update local state for orders
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.orderId === orderId ? { ...order, status: newStatus } : order
+        )
+      );
     } catch (error) {
       console.error(
         "Error updating order status:",
         error.response?.data || error.message
       );
-      alert(
-        error.response?.data?.errors?.[0]?.message ||
-          "An error occurred. Please try again."
-      );
+      alert("An error occurred. Please try again.");
     }
   };
 
