@@ -4,6 +4,7 @@ import SearchBar from "../components/SearchBar";
 import ShippingTable from "../components/ShippingTable";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const ShippingManagement = () => {
   const [shippings, setShippings] = useState([]); // Shipping list from API
@@ -77,34 +78,6 @@ const ShippingManagement = () => {
             trackingId: shipping.trackingId,
           }))}
         />
-      </div>
-    </div>
-  );
-};
-// Sidebar giữ nguyên
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/orders-management")}
-      >
-        Quản lý đơn hàng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/shipping-management")}
-      >
-        Quản lý thông tin ship hàng
-      </div>
-
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
       </div>
     </div>
   );

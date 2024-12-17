@@ -5,46 +5,7 @@ import SearchBar from "../components/SearchBar";
 import DishTable from "../components/DishTable";
 import axios from "axios";
 
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("roleId");
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/dishes-management")}
-      >
-        Quản lý món ăn
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/nutritionCriteria-management")}
-      >
-        Quản lí thể trạng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/ingredient-management")}
-      >
-        Quản lí nguyên liệu
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articles-management")}
-      >
-        Quản lí bài viết
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
-      </div>
-    </div>
-  );
-};
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const DishesManagement = () => {
   const navigate = useNavigate();

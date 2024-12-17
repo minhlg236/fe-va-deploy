@@ -4,7 +4,7 @@ import "../styles/ArticleModerateManagement.css";
 import SearchBar from "../components/SearchBar";
 import EnhancedTable from "../components/MorderateTable"; // Assuming this is your table component
 import axios from "axios";
-
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 const ArticleModerateManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,7 +89,7 @@ const ArticleModerateManagement = () => {
 
   return (
     <div className="article-moderate-container">
-      <Sidebar />
+      <Sidebar /> {/* Sử dụng Sidebar */}
       <div className="content">
         <div className="header">
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -110,34 +110,6 @@ const ArticleModerateManagement = () => {
             handleDeleteClick={handleDeleteClick}
           />
         )}
-      </div>
-    </div>
-  );
-};
-
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articleModerate-management")}
-      >
-        Quản lý phê duyệt bài viết
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/moderated-articles")}
-      >
-        Bài viết đã được xử lí
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
       </div>
     </div>
   );

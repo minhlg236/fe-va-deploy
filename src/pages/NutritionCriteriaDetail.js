@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "../styles/NutritionCriteriaDetail.css";
 import editIcon from "../assets/icons/edit-icon.png"; // Icon for editing
 import axios from "axios";
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const NutritionCriteriaDetail = () => {
   const { id } = useParams(); // Nutrition criteria ID from the URL
@@ -154,43 +155,43 @@ const NutritionCriteriaDetail = () => {
 };
 
 // Sidebar component
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    navigate("/");
-  };
+// const Sidebar = () => {
+//   const navigate = useNavigate();
+//   const handleLogout = () => {
+//     navigate("/");
+//   };
 
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/dishes-management")}
-      >
-        Quản lý món ăn
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/nutritionCriteria-management")}
-      >
-        Quản lí thể trạng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/Ingredient-management")}
-      >
-        Quản lí nguyên liệu
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articles-management")}
-      >
-        Quản lí bài viết
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="sidebar">
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/dishes-management")}
+//       >
+//         Quản lý món ăn
+//       </div>
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/nutritionCriteria-management")}
+//       >
+//         Quản lí thể trạng
+//       </div>
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/Ingredient-management")}
+//       >
+//         Quản lí nguyên liệu
+//       </div>
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/articles-management")}
+//       >
+//         Quản lí bài viết
+//       </div>
+//       <div className="sidebar-item logout" onClick={handleLogout}>
+//         Đăng xuất
+//       </div>
+//     </div>
+//   );
+// };
 
 export default NutritionCriteriaDetail;

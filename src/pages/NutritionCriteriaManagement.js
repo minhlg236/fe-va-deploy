@@ -4,6 +4,7 @@ import "../styles/NutritionCriteriaManagement.css";
 import axios from "axios";
 import SearchBar from "../components/SearchBar";
 import NutritionCriteriaTable from "../components/NutritionCriteriaTable"; // Assuming this is the NutritionCriteriaTable component
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const NutritionCriteriaManagement = () => {
   const navigate = useNavigate();
@@ -70,42 +71,3 @@ const NutritionCriteriaManagement = () => {
 };
 
 export default NutritionCriteriaManagement;
-
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/dishes-management")}
-      >
-        Quản lý món ăn
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/nutritionCriteria-management")}
-      >
-        Quản lí thể trạng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/Ingredient-management")}
-      >
-        Quản lí nguyên liệu
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articles-management")}
-      >
-        Quản lí bài viết
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
-      </div>
-    </div>
-  );
-};

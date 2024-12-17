@@ -130,52 +130,74 @@ const CreateArticle = () => {
           <label>Tiêu đề bài viết</label>
           <CKEditor
             editor={ClassicEditor}
-            config={{ licenseKey }}
+            config={{
+              licenseKey,
+              toolbar: [
+                "heading",
+                "|",
+                "bold",
+                "italic",
+                "link",
+                "bulletedList",
+                "numberedList",
+                "blockQuote",
+                "|",
+                "imageUpload",
+                "undo",
+                "redo",
+              ],
+            }}
             data={title}
             onChange={(event, editor) => setTitle(editor.getData())}
           />
         </div>
-        <CKEditor
-          editor={ClassicEditor}
-          config={{
-            licenseKey,
-            extraPlugins: [
-              function CustomPlugin(editor) {
-                editor.plugins.get("FileRepository").createUploadAdapter = (
-                  loader
-                ) => {
-                  return new CustomUploadAdapter(loader);
-                };
-              },
-            ],
-            toolbar: [
-              "heading",
-              "|",
-              "bold",
-              "italic",
-              "link",
-              "bulletedList",
-              "numberedList",
-              "blockQuote",
-              "|",
-              "imageUpload",
-              "undo",
-              "redo",
-            ],
-          }}
-          data={content}
-          onChange={(event, editor) => setContent(editor.getData())}
-        />
-
-        <div className="article-images">
-          <h3>Hình ảnh chính</h3>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleAddImage(e.target.files[0])}
+        <div className="article-input-group">
+          <label>Nội dung bài viết</label>
+          <CKEditor
+            editor={ClassicEditor}
+            config={{
+              licenseKey,
+              extraPlugins: [
+                function CustomPlugin(editor) {
+                  editor.plugins.get("FileRepository").createUploadAdapter = (
+                    loader
+                  ) => {
+                    return new CustomUploadAdapter(loader);
+                  };
+                },
+              ],
+              toolbar: [
+                "heading",
+                "|",
+                "bold",
+                "italic",
+                "link",
+                "bulletedList",
+                "numberedList",
+                "blockQuote",
+                "|",
+                "imageUpload",
+                "undo",
+                "redo",
+              ],
+            }}
+            data={content}
+            onChange={(event, editor) => setContent(editor.getData())}
           />
         </div>
-        <button type="submit">Tạo bài viết</button>
+
+        <button
+          type="submit"
+          style={{
+            marginTop: "10px",
+            display: "block",
+            marginLeft: "auto",
+            marginRight: "auto",
+            textAlign: "center",
+          }}
+        >
+          Tạo bài viết
+        </button>
       </form>
     </div>
   );

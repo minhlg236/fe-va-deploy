@@ -4,6 +4,7 @@ import SearchBar from "../components/SearchBar";
 import EnhancedTable from "../components/ModeratedArticleTable";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const ModeratedArticles = () => {
   const [articles, setArticles] = useState([]); // Danh sách bài viết từ API
@@ -54,35 +55,6 @@ const ModeratedArticles = () => {
     navigate(`/article-detail/${articleId}`);
   };
 
-  // Sidebar được giữ nguyên từ code bạn đã gửi
-  const Sidebar = () => {
-    const handleLogout = () => {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("roleId");
-      navigate("/");
-    };
-
-    return (
-      <div className="sidebar">
-        <div
-          className="sidebar-item"
-          onClick={() => navigate("/articleModerate-management")}
-        >
-          Quản lý phê duyệt bài viết
-        </div>
-        <div
-          className="sidebar-item"
-          onClick={() => navigate("/moderated-articles")}
-        >
-          Bài viết đã được xử lí
-        </div>
-        <div className="sidebar-item logout" onClick={handleLogout}>
-          Đăng xuất
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="moderated-articles-container">
       <Sidebar />
@@ -117,35 +89,6 @@ const ModeratedArticles = () => {
             moderateDate: article.moderateDate || "N/A",
           }))}
         />
-      </div>
-    </div>
-  );
-};
-
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("roleId");
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articleModerate-management")}
-      >
-        Quản lý phê duyệt bài viết
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/moderated-articles")}
-      >
-        Bài viết đã được xử lí
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
       </div>
     </div>
   );

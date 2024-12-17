@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/Login.css";
 
-// Định nghĩa Role ID
+// Define Role IDs
 const ROLES = {
   ADMIN: 1,
   STAFF: 2,
@@ -18,33 +18,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const roleId = localStorage.getItem("roleId");
-
-    if (token && roleId) {
-      switch (parseInt(roleId)) {
-        case ROLES.ADMIN:
-          navigate("/admin");
-          break;
-        case ROLES.STAFF:
-          navigate("/orders-management");
-          break;
-        case ROLES.CUSTOMER:
-          navigate("/dashboard");
-          break;
-        case ROLES.MODERATOR:
-          navigate("/articleModerate-management");
-          break;
-        case ROLES.NUTRITIONIST:
-          navigate("/dishes-management");
-          break;
-        default:
-          break;
-      }
-    }
-  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -60,6 +33,7 @@ const Login = () => {
         localStorage.setItem("roleId", user.roleId);
         localStorage.setItem("userId", user.userId);
 
+        // Role-based Navigation
         switch (user.roleId) {
           case ROLES.ADMIN:
             navigate("/admin");
@@ -106,6 +80,7 @@ const Login = () => {
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="Nhập số điện thoại"
+                    required
                   />
                 </div>
                 <div className="form-group mb-3">
@@ -117,35 +92,13 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Nhập mật khẩu"
+                    required
                   />
-                </div>
-                <div className="d-flex justify-content-between align-items-center">
-                  <div className="form-check">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id="rememberMe"
-                    />
-                    <label className="form-check-label" htmlFor="rememberMe">
-                      Nhớ tài khoản
-                    </label>
-                  </div>
-                  <a href="#!" className="text-decoration-none">
-                    Quên mật khẩu?
-                  </a>
                 </div>
                 <button type="submit" className="btn btn-primary w-100 mt-4">
                   Đăng nhập
                 </button>
               </form>
-              <div className="text-center mt-3">
-                <p className="small">
-                  Chưa có tài khoản?{" "}
-                  <a href="#!" className="text-decoration-none text-danger">
-                    Đăng ký
-                  </a>
-                </p>
-              </div>
             </div>
           </div>
         </div>

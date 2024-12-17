@@ -2,36 +2,37 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import axios from "axios";
 import "../styles/OrderDetail.css";
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("roleId");
-    navigate("/");
-  };
+// const Sidebar = () => {
+//   const navigate = useNavigate();
+//   const handleLogout = () => {
+//     localStorage.removeItem("authToken");
+//     localStorage.removeItem("roleId");
+//     navigate("/");
+//   };
 
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/orders-management")}
-      >
-        Quản lý đơn hàng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/shipping-management")}
-      >
-        Quản lý thông tin ship hàng
-      </div>
+//   return (
+//     <div className="sidebar">
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/orders-management")}
+//       >
+//         Quản lý đơn hàng
+//       </div>
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/shipping-management")}
+//       >
+//         Quản lý thông tin ship hàng
+//       </div>
 
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
-      </div>
-    </div>
-  );
-};
+//       <div className="sidebar-item logout" onClick={handleLogout}>
+//         Đăng xuất
+//       </div>
+//     </div>
+//   );
+// };
 
 const OrderDetail = () => {
   const { id } = useParams(); // Lấy id từ URL

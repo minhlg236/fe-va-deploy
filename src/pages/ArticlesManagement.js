@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
 import "../styles/ArticlesManagement.css";
 import SearchBar from "../components/SearchBar";
-import EnhancedTable from "../components/ArticleTable"; // Sử dụng ArticleTable từ trước
+import EnhancedTable from "../components/ArticleTable";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const ArticlesManagement = () => {
-  const [articles, setArticles] = useState([]); // Danh sách bài viết từ API
-  const [searchTerm, setSearchTerm] = useState(""); // Từ khóa tìm kiếm
-  const [filteredArticles, setFilteredArticles] = useState([]); // Bài viết đã lọc
+  const [articles, setArticles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredArticles, setFilteredArticles] = useState([]);
   const navigate = useNavigate();
 
-  // Hàm lấy ảnh bài viết
   const fetchArticleImages = async (articleId) => {
     try {
       const response = await axios.get(
@@ -22,14 +22,13 @@ const ArticlesManagement = () => {
           },
         }
       );
-      return response.data.length > 0 ? response.data[0].imageUrl : null; // Lấy ảnh đầu tiên nếu có
+      return response.data.length > 0 ? response.data[0].imageUrl : null;
     } catch (error) {
       console.error(`Lỗi khi tải ảnh bài viết ${articleId}:`, error);
-      return null; // Trả về null nếu có lỗi
+      return null;
     }
   };
 
-  // Gọi API để lấy danh sách bài viết và ảnh
   useEffect(() => {
     const fetchArticles = async () => {
       try {
@@ -59,7 +58,6 @@ const ArticlesManagement = () => {
     fetchArticles();
   }, []);
 
-  // Lọc bài viết theo từ khóa tìm kiếm
   useEffect(() => {
     const filtered = articles.filter((article) => {
       const matchesSearchTerm =
@@ -72,7 +70,7 @@ const ArticlesManagement = () => {
 
   return (
     <div className="articles-management-container">
-      <Sidebar />
+      <Sidebar /> {/* Sử dụng Sidebar */}
       <div className="content">
         <div className="articles-header">
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -127,46 +125,6 @@ const ArticlesManagement = () => {
             moderateDate: article.moderateDate || "N/A",
           }))}
         />
-      </div>
-    </div>
-  );
-};
-
-// Sidebar giữ nguyên
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/dishes-management")}
-      >
-        Quản lý món ăn
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/nutritionCriteria-management")}
-      >
-        Quản lí thể trạng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/Ingredient-management")}
-      >
-        Quản lí nguyên liệu
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articles-management")}
-      >
-        Quản lí bài viết
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
       </div>
     </div>
   );

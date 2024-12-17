@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/DishDetail.css";
 import editIcon from "../assets/icons/edit-icon.png";
+import Sidebar from "../components/Sidebar";
 
 const DishDetail = () => {
   const { id } = useParams();
@@ -12,104 +13,12 @@ const DishDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const [allIngredients, setAllIngredients] = useState([]); // Danh sách tất cả nguyên liệu
-  const [selectedIngredient, setSelectedIngredient] = useState(null); // Nguyên liệu được chọn
-  const [ingredientWeight, setIngredientWeight] = useState(""); // Khối lượng nguyên liệu
-  const [isAddingIngredient, setIsAddingIngredient] = useState(false); // Trạng thái đang thêm nguyên liệu
-
-  const [searchTerm, setSearchTerm] = useState(""); // Giá trị tìm kiếm
-  const [filteredIngredients, setFilteredIngredients] = useState([]); // Kết quả tìm kiếm
-
-  // Xử lý tìm kiếm theo thời gian thực
-  useEffect(() => {
-    if (searchTerm) {
-      const results = allIngredients.filter((ingredient) =>
-        ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredIngredients(results);
-    } else {
-      setFilteredIngredients([]);
-    }
-  }, [searchTerm, allIngredients]);
-
-  useEffect(() => {
-    const fetchDishDetails = async () => {
-      try {
-        setIsLoading(true);
-        const token = localStorage.getItem("authToken");
-
-        // Fetch dish details
-        const dishResponse = await axios.get(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/GetDishByID/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setDish(dishResponse.data);
-
-        // Fetch nutrition details
-        await fetchNutritionDetails();
-
-        // Fetch ingredients
-        const ingredientResponse = await axios.get(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/ingredients/getIngredientByDishId/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        // Fetch detailed ingredient information
-        const ingredientDetails = await Promise.all(
-          ingredientResponse.data.map(async (item) => {
-            const ingredientDetailResponse = await axios.get(
-              `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/ingredients/getIngredientByIngredientId/${item.ingredientId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            return {
-              ...ingredientDetailResponse.data,
-              weight: item.weight, // Add weight from the response
-            };
-          })
-        );
-        setIngredients(ingredientDetails);
-      } catch (error) {
-        console.error("Error fetching dish or nutrition details:", error);
-        alert("Failed to load details. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDishDetails();
-  }, [id, navigate]);
-
-  const handleUpdate = async () => {
-    try {
-      const token = localStorage.getItem("authToken");
-      await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/updateDishDetailByDishId`,
-        dish,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      alert("Dish updated successfully!");
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating dish:", error);
-      alert("Failed to update dish. Please try again.");
-    }
-  };
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [selectedIngredient, setSelectedIngredient] = useState(null);
+  const [ingredientWeight, setIngredientWeight] = useState("");
+  const [isAddingIngredient, setIsAddingIngredient] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredIngredients, setFilteredIngredients] = useState([]);
 
   useEffect(() => {
     const fetchAllIngredients = async () => {
@@ -132,6 +41,107 @@ const DishDetail = () => {
     fetchAllIngredients();
   }, []);
 
+  useEffect(() => {
+    if (searchTerm) {
+      const results = allIngredients.filter((ingredient) =>
+        ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredIngredients(results);
+    } else {
+      setFilteredIngredients([]);
+    }
+  }, [searchTerm, allIngredients]);
+
+  useEffect(() => {
+    const fetchDishDetails = async () => {
+      let isNoIngredientsError = false;
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem("authToken");
+
+        const dishResponse = await axios.get(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/GetDishByID/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (dishResponse.status === 404) {
+          alert(
+            "Không thể tìm thấy thông tin chi tiết món ăn, vui lòng thử lại"
+          );
+          setIsLoading(false);
+          return;
+        }
+        setDish(dishResponse.data);
+
+        await fetchNutritionDetails();
+
+        const ingredientResponse = await axios.get(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/ingredients/getIngredientByDishId/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (ingredientResponse.data.length === 0) {
+          setIngredients([]);
+          setIsLoading(false);
+          alert(
+            "Món ăn của bạn chưa có nguyên liệu nào. Hãy thêm nguyên liệu vào nhé!"
+          );
+          isNoIngredientsError = true;
+          return;
+        }
+
+        const ingredientDetails = await Promise.all(
+          ingredientResponse.data.map(async (item) => {
+            try {
+              const ingredientDetailResponse = await axios.get(
+                `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/ingredients/getIngredientByIngredientId/${item.ingredientId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
+              return {
+                ...ingredientDetailResponse.data,
+                weight: item.weight,
+              };
+            } catch (error) {
+              console.error(
+                `Error fetching ingredient details for ID ${item.ingredientId}:`,
+                error
+              );
+              alert(
+                `Không thể tải thông tin nguyên liệu có ID ${item.ingredientId}. Vui lòng thử lại.`
+              );
+              return null;
+            }
+          })
+        );
+
+        const validIngredientDetails = ingredientDetails.filter(
+          (item) => item !== null
+        );
+        setIngredients(validIngredientDetails);
+      } catch (error) {
+        console.error("Error fetching dish details:", error);
+        if (!isNoIngredientsError) {
+          alert("Không thể tải chi tiết món ăn, vui lòng thử lại");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDishDetails();
+  }, [id, navigate]);
+
   const fetchNutritionDetails = async () => {
     try {
       const token = localStorage.getItem("authToken");
@@ -150,6 +160,26 @@ const DishDetail = () => {
     }
   };
 
+  const handleUpdate = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.put(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/updateDishDetailByDishId`,
+        dish,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert("Dish updated successfully!");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating dish:", error);
+      alert("Failed to update dish. Please try again.");
+    }
+  };
+
   const handleAddIngredient = async () => {
     if (!selectedIngredient || ingredientWeight <= 0) {
       alert("Please select an ingredient and enter a valid weight.");
@@ -159,7 +189,7 @@ const DishDetail = () => {
     try {
       const token = localStorage.getItem("authToken");
       const payload = {
-        dishId: id, // ID món ăn từ useParams
+        dishId: id,
         ingredientId: selectedIngredient,
         weight: parseFloat(ingredientWeight),
       };
@@ -173,7 +203,6 @@ const DishDetail = () => {
           },
         }
       );
-
       if (response.data.success) {
         const selectedIngredientData = allIngredients.find(
           (ingredient) =>
@@ -190,7 +219,6 @@ const DishDetail = () => {
           },
         ]);
 
-        // Gọi lại API để load lại thông tin dinh dưỡng
         await fetchNutritionDetails();
         setIsAddingIngredient(false);
         setSelectedIngredient(null);
@@ -215,14 +243,11 @@ const DishDetail = () => {
           },
         }
       );
-
       if (response.data.success) {
         alert("Ingredient removed successfully!");
         setIngredients((prev) =>
           prev.filter((ingredient) => ingredient.ingredientId !== ingredientId)
         );
-
-        // Gọi lại API để load lại thông tin dinh dưỡng
         await fetchNutritionDetails();
       } else {
         alert(response.data.message || "Failed to remove ingredient.");
@@ -238,6 +263,12 @@ const DishDetail = () => {
     setDish((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectIngredient = (ingredient) => {
+    setSelectedIngredient(ingredient.ingredientId);
+    setSearchTerm(ingredient.name);
+    setFilteredIngredients([]);
+  };
+
   if (isLoading) {
     return <p>Loading dish details...</p>;
   }
@@ -251,13 +282,11 @@ const DishDetail = () => {
       <Sidebar />
       <div className="content">
         <div className="dish-detail-container">
-          <h2>Dish Details</h2>
-
+          <h2>Chi tiết món ăn</h2>
           <div className="top-buttons">
             <button className="back-button" onClick={() => navigate(-1)}>
-              Go Back
+              Quay lại
             </button>
-
             <div
               className="edit-icon"
               onClick={() => setIsEditing((prev) => !prev)}
@@ -266,10 +295,9 @@ const DishDetail = () => {
               <img src={editIcon} alt="Edit" width="40" height="40" />
             </div>
           </div>
-
           <div className="dish-info">
             <div>
-              <label>Dish Name:</label>
+              <label>Tên món:</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -281,9 +309,8 @@ const DishDetail = () => {
                 <p>{dish.name}</p>
               )}
             </div>
-
             <div>
-              <label>Dish Type:</label>
+              <label>Loại:</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -295,7 +322,6 @@ const DishDetail = () => {
                 <p>{dish.dishType}</p>
               )}
             </div>
-
             <div>
               <label>Price:</label>
               {isEditing ? (
@@ -306,12 +332,11 @@ const DishDetail = () => {
                   onChange={handleChange}
                 />
               ) : (
-                <p>{dish.price} VNĐ</p>
+                <p>{dish.price?.toLocaleString("vi-VN")} VNĐ</p>
               )}
             </div>
-
             <div>
-              <label>Description:</label>
+              <label>Mô tả:</label>
               {isEditing ? (
                 <textarea
                   name="description"
@@ -336,9 +361,18 @@ const DishDetail = () => {
             </div>
 
             <div>
-              <label>Image:</label>
+              <label>Hình ảnh:</label>
               <div>
-                <img src={dish.imageUrl} alt={dish.name} width="100" />
+                <img
+                  src={dish.imageUrl}
+                  alt={dish.name}
+                  style={{
+                    width: "400px",
+                    height: "400px",
+                    objectFit: "cover",
+                    marginBottom: "10px",
+                  }}
+                />
               </div>
             </div>
 
@@ -355,6 +389,9 @@ const DishDetail = () => {
                     <th>Sodium</th>
                   </tr>
                 </thead>
+
+                {/* muốn thêm thành phần dinh dưỡng nào thì cứ .ra là đc  */}
+
                 <tbody>
                   <tr>
                     <td>{nutrition.totalWeights?.toFixed(2)} g</td>
@@ -368,9 +405,8 @@ const DishDetail = () => {
                 </tbody>
               </table>
             </div>
-
             <div>
-              <label>Ingredients:</label>
+              <label>Nguyên liệu:</label>
               <ul>
                 {ingredients.map((ingredient) => (
                   <li key={ingredient.ingredientId} className="ingredient-item">
@@ -400,26 +436,36 @@ const DishDetail = () => {
                 Add New Ingredient
               </button>
             </div>
-
-            {/* Form thêm nguyên liệu */}
+            {/* Add ingredient form (conditionally rendered) */}
             {isAddingIngredient && (
               <div className="add-ingredient-form">
                 <h3>Add New Ingredient</h3>
-                <select
-                  onChange={(e) => setSelectedIngredient(e.target.value)}
-                  value={selectedIngredient || ""}
-                >
-                  <option value="">--Select Ingredient--</option>
-                  {allIngredients.map((ingredient) => (
-                    <option
-                      key={ingredient.ingredientId}
-                      value={ingredient.ingredientId}
-                    >
-                      {ingredient.name}
-                    </option>
-                  ))}
-                </select>
-
+                <label>
+                  Search Ingredient:
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search for ingredients..."
+                  />
+                </label>
+                {filteredIngredients.length > 0 && (
+                  <ul className="ingredient-search-results">
+                    {filteredIngredients.map((ingredient) => (
+                      <li
+                        key={ingredient.ingredientId}
+                        onClick={() => handleSelectIngredient(ingredient)}
+                        style={{
+                          cursor: "pointer",
+                          padding: "5px",
+                          borderBottom: "1px solid #ccc",
+                        }}
+                      >
+                        {ingredient.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <label>
                   Weight (g):
                   <input
@@ -428,7 +474,6 @@ const DishDetail = () => {
                     onChange={(e) => setIngredientWeight(e.target.value)}
                   />
                 </label>
-
                 <div>
                   <button onClick={handleAddIngredient}>Add</button>
                   <button onClick={() => setIsAddingIngredient(false)}>
@@ -438,108 +483,12 @@ const DishDetail = () => {
               </div>
             )}
           </div>
-
           {isEditing && (
             <button className="edit-button" onClick={handleUpdate}>
               Save Changes
             </button>
           )}
-
-          <div className="add-ingredient-form">
-            <h3>Add New Ingredient</h3>
-            <label>
-              Search Ingredient:
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search for ingredients..."
-              />
-            </label>
-
-            {filteredIngredients.length > 0 ? (
-              <ul className="ingredient-search-results">
-                {filteredIngredients.map((ingredient) => (
-                  <li
-                    key={ingredient.ingredientId}
-                    onClick={() => {
-                      setSelectedIngredient(ingredient.ingredientId);
-                      setSearchTerm(ingredient.name); // Đặt tên đã chọn vào trường tìm kiếm
-                      setFilteredIngredients([]); // Xóa kết quả sau khi chọn
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      padding: "5px",
-                      borderBottom: "1px solid #ccc",
-                    }}
-                  >
-                    {ingredient.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              searchTerm && <p>No results found for "{searchTerm}"</p>
-            )}
-
-            <label>
-              Weight (g):
-              <input
-                type="number"
-                value={ingredientWeight}
-                onChange={(e) => setIngredientWeight(e.target.value)}
-              />
-            </label>
-
-            <div>
-              <button onClick={handleAddIngredient}>Add</button>
-              <button onClick={() => setIsAddingIngredient(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-// Sidebar Component
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("authToken"); // Clear JWT on logout
-    localStorage.removeItem("roleId"); // Clear roleId
-    navigate("/");
-  };
-
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/dishes-management")}
-      >
-        Quản lý món ăn
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/nutritionCriteria-management")}
-      >
-        Quản lí thể trạng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/Ingredient-management")}
-      >
-        Quản lí nguyên liệu
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/articles-management")}
-      >
-        Quản lí bài viết
-      </div>
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
       </div>
     </div>
   );

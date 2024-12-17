@@ -10,11 +10,9 @@ import {
   TablePagination,
   TableRow,
   Paper,
-  Checkbox,
   IconButton,
 } from "@mui/material";
 import {
-  Delete as DeleteIcon,
   Visibility as VisibilityIcon,
   ArrowDropUp as ArrowDropUpIcon,
   ArrowDropDown as ArrowDropDownIcon,
@@ -43,38 +41,23 @@ function stableSort(array, comparator) {
   return stabilizedArray.map((el) => el[0]);
 }
 
-function DishTableHead({
-  order,
-  orderBy,
-  onRequestSort,
-  onSelectAllClick,
-  numSelected,
-  rowCount,
-}) {
+function DishTableHead({ order, orderBy, onRequestSort }) {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
 
   const columns = [
-    { id: "dishId", label: "Dish ID" },
-    { id: "name", label: "Name" },
-    { id: "dishType", label: "Type" },
-    { id: "price", label: "Price" },
-    { id: "preferenceName", label: "Preference" },
-    { id: "status", label: "Status" },
+    { id: "dishId", label: "ID" },
+    { id: "name", label: "Tên món" },
+    { id: "imageUrl", label: "Hình ảnh" },
+    { id: "dishType", label: "Loại món" },
+    { id: "price", label: "Giá" },
+    { id: "preferenceName", label: "Trường phái" },
+    { id: "status", label: "trạng thái" },
   ];
-
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
-        </TableCell>
         {columns.map((column) => (
           <TableCell
             key={column.id}
@@ -92,25 +75,21 @@ function DishTableHead({
             ) : null}
           </TableCell>
         ))}
-        <TableCell align="right">Actions</TableCell>
+        <TableCell align="right">Hành động</TableCell>
       </TableRow>
     </TableHead>
   );
 }
 
 DishTableHead.propTypes = {
-  numSelected: PropTypes.number.isRequired,
   onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
   order: PropTypes.oneOf(["asc", "desc"]).isRequired,
   orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired,
 };
 
-export default function DishTable({ dishes, handleDeleteClick }) {
+export default function DishTable({ dishes }) {
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("dishId");
-  const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const navigate = useNavigate();
@@ -119,15 +98,6 @@ export default function DishTable({ dishes, handleDeleteClick }) {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelected = dishes.map((dish) => dish.dishId);
-      setSelected(newSelected);
-      return;
-    }
-    setSelected([]);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -139,76 +109,42 @@ export default function DishTable({ dishes, handleDeleteClick }) {
     setPage(0);
   };
 
-  const isSelected = (id) => selected.indexOf(id) !== -1;
-
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <TableContainer>
           <Table>
             <DishTableHead
-              numSelected={selected.length}
               order={order}
               orderBy={orderBy}
-              rowCount={dishes.length}
-              onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
             />
             <TableBody>
               {stableSort(dishes, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((dish) => {
-                  const isItemSelected = isSelected(dish.dishId);
                   return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={dish.dishId}
-                      selected={isItemSelected}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          onChange={() => {
-                            const selectedIndex = selected.indexOf(dish.dishId);
-                            let newSelected = [];
-                            if (selectedIndex === -1) {
-                              newSelected = newSelected.concat(
-                                selected,
-                                dish.dishId
-                              );
-                            } else if (selectedIndex === 0) {
-                              newSelected = newSelected.concat(
-                                selected.slice(1)
-                              );
-                            } else if (selectedIndex === selected.length - 1) {
-                              newSelected = newSelected.concat(
-                                selected.slice(0, -1)
-                              );
-                            } else if (selectedIndex > 0) {
-                              newSelected = newSelected.concat(
-                                selected.slice(0, selectedIndex),
-                                selected.slice(selectedIndex + 1)
-                              );
-                            }
-                            setSelected(newSelected);
-                          }}
-                        />
-                      </TableCell>
+                    <TableRow hover tabIndex={-1} key={dish.dishId}>
                       <TableCell>{dish.dishId}</TableCell>
                       <TableCell>{dish.name}</TableCell>
+                      <TableCell>
+                        {dish.imageUrl && (
+                          <img
+                            src={dish.imageUrl}
+                            alt={dish.name}
+                            style={{
+                              width: "50px",
+                              height: "50px",
+                              objectFit: "cover",
+                            }}
+                          />
+                        )}
+                      </TableCell>
                       <TableCell>{dish.dishType}</TableCell>
                       <TableCell>{dish.price} VNĐ</TableCell>
                       <TableCell>{dish.preferenceName}</TableCell>
                       <TableCell>{dish.status}</TableCell>
                       <TableCell align="right">
-                        <IconButton
-                          onClick={() => handleDeleteClick(dish.dishId)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
                         <IconButton
                           onClick={() => navigate(`/dish/${dish.dishId}`)}
                         >

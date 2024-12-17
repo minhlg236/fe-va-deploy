@@ -4,6 +4,7 @@ import "../styles/OrdersManagement.css";
 import SearchBar from "../components/SearchBar";
 import OrderTable from "../components/OrderTable";
 import axios from "axios";
+import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const OrdersManagement = () => {
   const navigate = useNavigate();
@@ -154,35 +155,35 @@ const OrdersManagement = () => {
   );
 };
 
-// Sidebar component
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("roleId");
-    navigate("/");
-  };
+// // Sidebar component
+// const Sidebar = () => {
+//   const navigate = useNavigate();
+//   const handleLogout = () => {
+//     localStorage.removeItem("authToken");
+//     localStorage.removeItem("roleId");
+//     navigate("/");
+//   };
 
-  return (
-    <div className="sidebar">
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/orders-management")}
-      >
-        Quản lý đơn hàng
-      </div>
-      <div
-        className="sidebar-item"
-        onClick={() => navigate("/shipping-management")}
-      >
-        Quản lý thông tin ship hàng
-      </div>
+//   return (
+//     <div className="sidebar">
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/orders-management")}
+//       >
+//         Quản lý đơn hàng
+//       </div>
+//       <div
+//         className="sidebar-item"
+//         onClick={() => navigate("/shipping-management")}
+//       >
+//         Quản lý thông tin ship hàng
+//       </div>
 
-      <div className="sidebar-item logout" onClick={handleLogout}>
-        Đăng xuất
-      </div>
-    </div>
-  );
-};
+//       <div className="sidebar-item logout" onClick={handleLogout}>
+//         Đăng xuất
+//       </div>
+//     </div>
+//   );
+// };
 
 export default OrdersManagement;

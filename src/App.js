@@ -240,7 +240,7 @@ function App() {
         <Route
           path="/create-article"
           element={
-            <PrivateRoute roles={["Admin", "Moderator", "Nutritionist"]}>
+            <PrivateRoute roles={["Admin", "Nutritionist"]}>
               <CreateArticle />
             </PrivateRoute>
           }
