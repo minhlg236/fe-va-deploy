@@ -99,7 +99,12 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
-export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
+export default function OrderTable({
+  rows,
+  handleDeleteClick,
+  setOrders,
+  sendNotification, // Get sendNotification prop
+}) {
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("orderId");
   const [selected, setSelected] = useState([]);
@@ -137,7 +142,6 @@ export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
       alert("Authentication token missing. Please log in again.");
       return;
     }
-
     const headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -155,8 +159,6 @@ export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
         alert("Failed to update order status.");
         return;
       }
-
-      alert("Order status updated successfully!");
 
       // Step 2: Call shipping API if status is 'delivering'
       if (newStatus === "delivering") {
@@ -206,6 +208,29 @@ export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
           order.orderId === orderId ? { ...order, status: newStatus } : order
         )
       );
+
+      // Step 5: Send notification
+      let content = "";
+      switch (newStatus) {
+        case "processing":
+          content = "Đơn hàng của bạn đang được xử lý.";
+          break;
+        case "delivering":
+          content = "Đơn hàng của bạn đang được giao.";
+          break;
+        case "delivered":
+          content = "Đơn hàng của bạn đã được giao thành công.";
+          break;
+        case "cancel":
+          content = "Đơn hàng của bạn đã bị hủy, xin lỗi vì sự bất tiện.";
+          break;
+        default:
+          content = "Trạng thái đơn hàng của bạn đã thay đổi.";
+      }
+
+      if (sendNotification && userId) {
+        await sendNotification(userId, "order_status", content);
+      }
     } catch (error) {
       console.error(
         "Error updating order status:",
@@ -343,4 +368,6 @@ export default function OrderTable({ rows, handleDeleteClick, setOrders }) {
 OrderTable.propTypes = {
   rows: PropTypes.array.isRequired,
   handleDeleteClick: PropTypes.func,
+  sendNotification: PropTypes.func.isRequired, // Add sendNotification prop
+  setOrders: PropTypes.func.isRequired,
 };

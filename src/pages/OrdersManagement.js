@@ -14,6 +14,40 @@ const OrdersManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
 
+  // Function to send notification
+  const sendNotification = async (userId, notificationType, content) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/notifications/sendNotification`,
+        {},
+        {
+          params: {
+            userId,
+            notificationType,
+            content,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Notification sent successfully:", response.data);
+      } else {
+        console.error("Failed to send notification:", response);
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  };
+
   // Fetch orders
   useEffect(() => {
     const fetchOrders = async () => {
@@ -145,45 +179,15 @@ const OrdersManagement = () => {
         ) : (
           <OrderTable
             rows={filteredOrders}
-            handleRowClick={handleRowClick} // Pass handler for row click
+            handleRowClick={handleRowClick}
             handleDeleteClick={handleDeleteClick}
             setOrders={setOrders}
+            sendNotification={sendNotification} // Pass sendNotification to OrderTable
           />
         )}
       </div>
     </div>
   );
 };
-
-// // Sidebar component
-// const Sidebar = () => {
-//   const navigate = useNavigate();
-//   const handleLogout = () => {
-//     localStorage.removeItem("authToken");
-//     localStorage.removeItem("roleId");
-//     navigate("/");
-//   };
-
-//   return (
-//     <div className="sidebar">
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/orders-management")}
-//       >
-//         Quản lý đơn hàng
-//       </div>
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/shipping-management")}
-//       >
-//         Quản lý thông tin ship hàng
-//       </div>
-
-//       <div className="sidebar-item logout" onClick={handleLogout}>
-//         Đăng xuất
-//       </div>
-//     </div>
-//   );
-// };
 
 export default OrdersManagement;
