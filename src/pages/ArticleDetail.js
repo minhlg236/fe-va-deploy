@@ -337,6 +337,56 @@ const ArticleDetail = () => {
     }
   };
 
+  const fetchFollowers = async (authorId) => {
+    try {
+      const response = await axios.get(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/follows/allFollowerByUserId/${authorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      return [];
+    }
+  };
+
+  const sendNotification = async (userId, notificationType, content) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/notifications/sendNotification`,
+        {},
+        {
+          params: {
+            userId,
+            notificationType,
+            content,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Notification sent successfully:", response.data);
+      } else {
+        console.error("Failed to send notification:", response);
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  };
+
   const handleChangeStatus = async (newStatus) => {
     try {
       await axios.put(
@@ -348,6 +398,16 @@ const ArticleDetail = () => {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
         }
+      );
+
+      const notificationContent =
+        newStatus === "accepted"
+          ? "Bài viết của bạn vừa được phê duyệt"
+          : "Bài viết của bạn đã bị từ chối";
+      await sendNotification(
+        article.authorId,
+        "new_article",
+        notificationContent
       );
 
       if (newStatus === "accepted") {
@@ -362,9 +422,17 @@ const ArticleDetail = () => {
           }
         );
 
-        alert("Bài viết đã được chấp nhận và cộng 20 điểm cho tác giả!");
-      } else {
-        alert("Bài viết đã bị từ chối!");
+        // Lấy danh sách người theo dõi
+        const followers = await fetchFollowers(article.authorId);
+        if (followers && followers.length > 0) {
+          for (const follower of followers) {
+            await sendNotification(
+              follower.followerId,
+              "new_article",
+              "Người bạn theo dõi vừa đăng bài viết mới"
+            );
+          }
+        }
       }
 
       // Refresh the article data after status change
@@ -377,6 +445,11 @@ const ArticleDetail = () => {
         }
       );
       setArticle(response.data);
+      alert(
+        newStatus === "accepted"
+          ? "Bài viết đã được chấp nhận và cộng 20 điểm cho tác giả, thông báo đến người theo dõi (nếu có)!"
+          : "Bài viết đã bị từ chối và thông báo đến tác giả!"
+      );
     } catch (error) {
       console.error("Error changing article status:", error);
       alert("Không thể thay đổi trạng thái bài viết. Vui lòng thử lại.");
