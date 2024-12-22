@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
-import "../styles/ModeratedArticles.css";
-import SearchBar from "../components/SearchBar";
-import EnhancedTable from "../components/ModeratedArticleTable";
 import { useNavigate } from "react-router-dom";
+import { Spin, message, Tabs } from "antd";
+import MainLayout from "../components/MainLayout";
+import SearchBar from "../components/SearchBar";
+import ModeratedArticleTable from "../components/ModeratedArticleTable";
 import axios from "axios";
-import Sidebar from "../components/Sidebar"; // Import Sidebar
-
+const { TabPane } = Tabs;
 const ModeratedArticles = () => {
-  const [articles, setArticles] = useState([]); // Danh sách bài viết từ API
-  const [activeTab, setActiveTab] = useState("accepted"); // Tab hiện tại
-  const [searchTerm, setSearchTerm] = useState(""); // Từ khóa tìm kiếm
-  const [filteredArticles, setFilteredArticles] = useState([]); // Bài viết đã lọc
+  const [articles, setArticles] = useState([]);
+  const [activeTab, setActiveTab] = useState("accepted");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredArticles, setFilteredArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Gọi API để lấy danh sách bài viết
   useEffect(() => {
     const fetchArticles = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(
           "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/allArticleByRoleId/3",
           {
@@ -28,14 +29,15 @@ const ModeratedArticles = () => {
         setArticles(response.data);
       } catch (error) {
         console.error("Lỗi khi tải danh sách bài viết:", error);
-        alert("Không thể tải danh sách bài viết.");
+        message.error("Không thể tải danh sách bài viết.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchArticles();
   }, []);
 
-  // Lọc bài viết theo tab hiện tại và từ khóa tìm kiếm
   useEffect(() => {
     const filtered = articles.filter((article) => {
       const isAccepted =
@@ -50,47 +52,33 @@ const ModeratedArticles = () => {
     setFilteredArticles(filtered);
   }, [articles, activeTab, searchTerm]);
 
-  // Xử lý sự kiện khi bấm vào một hàng trong bảng
-  const handleRowClick = (articleId) => {
-    navigate(`/article-detail/${articleId}`);
+  const handleTabChange = (key) => {
+    setActiveTab(key);
   };
 
   return (
-    <div className="moderated-articles-container">
-      <Sidebar />
-      <div className="content">
-        <div className="moderated-tabs">
-          <button
-            className={`moderated-tab ${
-              activeTab === "accepted" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("accepted")}
-          >
-            Đã Duyệt
-          </button>
-          <button
-            className={`moderated-tab ${
-              activeTab === "rejected" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("rejected")}
-          >
-            Đã Từ Chối
-          </button>
-        </div>
-        <div className="moderated-header">
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-        </div>
-        <EnhancedTable
-          rows={filteredArticles.map((article) => ({
-            articleId: article.articleId,
-            title: article.title,
-            authorName: article.authorName,
-            status: article.status,
-            moderateDate: article.moderateDate || "N/A",
-          }))}
-        />
+    <MainLayout title="Quản lý bài viết đã duyệt">
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </div>
-    </div>
+      <Tabs defaultActiveKey="accepted" onChange={handleTabChange}>
+        <TabPane tab="Đã Duyệt" key="accepted" />
+        <TabPane tab="Đã Từ Chối" key="rejected" />
+      </Tabs>
+      {isLoading ? (
+        <Spin tip="Đang tải danh sách bài viết..." />
+      ) : filteredArticles.length === 0 ? (
+        <div>Không có bài viết nào để hiển thị.</div>
+      ) : (
+        <ModeratedArticleTable rows={filteredArticles} />
+      )}
+    </MainLayout>
   );
 };
 

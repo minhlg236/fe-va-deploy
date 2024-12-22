@@ -1,44 +1,82 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
-import "../styles/ArticleDetail.css";
+import {
+  Card,
+  Button,
+  Typography,
+  Row,
+  Col,
+  Spin,
+  message,
+  Descriptions,
+  Space,
+  Tag,
+  Avatar,
+  Image,
+  Divider,
+} from "antd";
+import {
+  EditOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import Sidebar from "../components/Sidebar"; // Import Sidebar
+import MainLayout from "../components/MainLayout";
 
+const { Title, Text } = Typography;
 const licenseKey =
   "eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3MzU5NDg3OTksImp0aSI6IjU3OGU5Mjc0LTU0ODMtNGFjZC1hYzFjLWVjZTM2NjgxMjY3MiIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiLCJzaCJdLCJ3aGl0ZUxhYmVsIjp0cnVlLCJsaWNlbnNlVHlwZSI6InRyaWFsIiwiZmVhdHVyZXMiOlsiKiJdLCJ2YyI6IjkxYTUyZTA5In0.lXiLIzvr3j5KQrDrMFd9KBCvaObv75SByOxGRTY-Oram1GoHafQOso7MuRp2BEi8JwxIgSppQywbk8DnqsofaA";
 
 const ArticleDetail = () => {
   const { id } = useParams();
   const [article, setArticle] = useState(null);
+  const [articleImages, setArticleImages] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [moderateDate, setModerateDate] = useState(null);
-  const navigate = useNavigate();
+  const [currentStatus, setCurrentStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const roleId = parseInt(localStorage.getItem("roleId"));
   const [formData, setFormData] = useState({
     title: "",
     content: "",
   });
 
-  // State và logic cho Article Body
-  const [articleBodies, setArticleBodies] = useState([]);
-  const [editingBodyIndex, setEditingBodyIndex] = useState(-1); // Chỉnh sửa nội dung bài viết
-  const CLOUD_NAME = "dpzzzifpa";
-  const UPLOAD_PRESET = "vegetarian assistant";
-
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token || !roleId) {
-      alert("Bạn cần đăng nhập để truy cập trang này!");
-      navigate("/");
+      message.error("Bạn cần đăng nhập để truy cập trang này!");
       return;
     }
-  }, [navigate, roleId]);
+  }, [roleId]);
+
+  useEffect(() => {
+    const fetchArticleImages = async () => {
+      try {
+        const response = await axios.get(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleImages/getArticleImageByArticleId/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+        setArticleImages(response.data);
+      } catch (error) {
+        console.error("Error fetching article images:", error);
+      }
+    };
+    fetchArticleImages();
+  }, [id]);
 
   useEffect(() => {
     const fetchArticle = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(
           `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/Article/${id}`,
           {
@@ -54,268 +92,26 @@ const ArticleDetail = () => {
           authorId: response.data.authorId,
           authorName: response.data.authorName,
         });
-        setModerateDate(response.data.moderateDate); // Lấy moderateDate từ API
+        setModerateDate(response.data.moderateDate);
+        setCurrentStatus(response.data.status || "pending");
       } catch (error) {
         console.error("Lỗi khi tải thông tin bài viết:", error);
-        alert("Không thể tải thông tin bài viết.");
-        navigate("/articles-management");
+        message.error("Không thể tải thông tin bài viết.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchArticle();
-  }, [id, navigate]);
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // ----------  Article Body Logic -----------
-  useEffect(() => {
-    const fetchArticleBodies = async () => {
-      try {
-        const response = await axios.get(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/getArticleBodyByArticleId/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          }
-        );
-        console.log(response.data); // Kiểm tra dữ liệu API
-        setArticleBodies(response.data);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách body:", error);
-      }
-    };
-
-    fetchArticleBodies();
   }, [id]);
 
-  const handleUploadBodyImage = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      // Upload image to Cloudinary
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-
-      if (response.data.secure_url) {
-        console.log(
-          "Body image uploaded successfully:",
-          response.data.secure_url
-        );
-        return response.data.secure_url; // Return the image URL
-      }
-    } catch (error) {
-      console.error(
-        "Error uploading body image to Cloudinary:",
-        error.response?.data || error.message
-      );
-      alert("Failed to upload the image. Please try again.");
-      return ""; // Return an empty string if an error occurs
-    }
-  };
-
-  const handleUpdateBodyImage = async (bodyId, newFile) => {
-    try {
-      const newImageUrl = await handleUploadBodyImage(newFile);
-      if (!newImageUrl) {
-        alert("Upload ảnh thất bại. Vui lòng thử lại!");
-        return;
-      }
-
-      const updatedBody = {
-        ...articleBodies.find((b) => b.bodyId === bodyId),
-        imageUrl: newImageUrl,
-      };
-
-      await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${bodyId}`,
-        updatedBody,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-
-      alert("Cập nhật ảnh trong nội dung thành công!");
-      setArticleBodies((prev) =>
-        prev.map((b) => (b.bodyId === bodyId ? updatedBody : b))
-      );
-    } catch (error) {
-      console.error("Lỗi khi cập nhật ảnh:", error);
-      alert("Không thể cập nhật ảnh.");
-    }
-  };
-
-  const handleEditBody = (index) => {
-    setEditingBodyIndex(index);
-  };
-
-  const handleSaveBody = async (index) => {
-    const body = articleBodies[index];
-    try {
-      let imageUrl = body.imageUrl;
-
-      // If a new file is selected, upload it to Cloudinary
-      if (body.newFile) {
-        imageUrl = await handleUploadBodyImage(body.newFile);
-        if (!imageUrl) {
-          alert("Failed to upload the image. Please try again.");
-          return;
-        }
-      }
-
-      const updatedBody = {
-        ...body,
-        imageUrl: imageUrl, // Use the uploaded image URL
-      };
-
-      await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${body.bodyId}`,
-        updatedBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-
-      alert("Content updated successfully!");
-      setEditingBodyIndex(-1);
-
-      // Update the articleBodies state with the new changes
-      setArticleBodies((prev) =>
-        prev.map((b, i) => (i === index ? updatedBody : b))
-      );
-    } catch (error) {
-      console.error("Error updating body content:", error);
-      alert("Unable to update content. Please try again.");
-    }
-  };
-
-  const handleDeleteBodyImage = async (bodyId, imageUrl) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh này?")) return;
-
-    try {
-      const updatedBody = {
-        ...articleBodies.find((body) => body.bodyId === bodyId),
-        imageUrl: "", // Xóa URL ảnh
-      };
-
-      // Cập nhật thông tin body lên server
-      await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${bodyId}`,
-        updatedBody,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-
-      alert("Xóa ảnh thành công!");
-      setArticleBodies((prev) =>
-        prev.map((body) =>
-          body.bodyId === bodyId ? { ...body, imageUrl: "" } : body
-        )
-      );
-    } catch (error) {
-      console.error("Lỗi khi xóa ảnh:", error);
-      alert("Không thể xóa ảnh. Vui lòng thử lại.");
-    }
-  };
-
-  const handleHideBody = async (bodyId) => {
-    try {
-      const bodyToUpdate = articleBodies.find((body) => body.bodyId === bodyId);
-
-      if (!bodyToUpdate) {
-        alert("Không tìm thấy nội dung cần ẩn.");
-        return;
-      }
-
-      // Cập nhật position của body thành 0
-      const updatedBody = {
-        ...bodyToUpdate,
-        position: 0,
-      };
-
-      await axios.put(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articleBodies/updateArticleBodyByBodyId/${bodyId}`,
-        updatedBody,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-
-      alert("Ẩn nội dung thành công!");
-      setArticleBodies((prev) =>
-        prev.map((body) =>
-          body.bodyId === bodyId ? { ...body, position: 0 } : body
-        )
-      );
-    } catch (error) {
-      console.error("Lỗi khi ẩn nội dung:", error);
-      alert("Không thể ẩn nội dung. Vui lòng thử lại.");
-    }
-  };
-  class CustomUploadAdapter {
-    constructor(loader) {
-      this.loader = loader;
-    }
-
-    async upload() {
-      const data = new FormData();
-      const file = await this.loader.file;
-
-      data.append("file", file);
-      data.append("upload_preset", UPLOAD_PRESET);
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: data,
-        }
-      );
-
-      const result = await response.json();
-
-      return {
-        default: result.secure_url,
-      };
-    }
-
-    abort() {
-      console.log("Upload bị hủy");
-    }
-  }
-
-  // ----------  End Article Body Logic -----------
-
-  // Khi nhấn lưu thay đổi
   const handleSaveChanges = async () => {
     try {
       const payload = {
         articleId: article.articleId,
         title: formData.title,
         content: formData.content,
-        status: "accepted",
+        status: currentStatus,
         authorId: article.authorId,
       };
 
@@ -329,65 +125,16 @@ const ArticleDetail = () => {
         }
       );
 
-      alert("Cập nhật bài viết thành công!");
+      message.success("Cập nhật bài viết thành công!");
       setIsEditing(false);
     } catch (error) {
       console.error("Lỗi khi cập nhật bài viết:", error);
-      alert("Không thể cập nhật bài viết.");
+      message.error("Không thể cập nhật bài viết.");
     }
   };
 
-  const fetchFollowers = async (authorId) => {
-    try {
-      const response = await axios.get(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/follows/allFollowerByUserId/${authorId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching followers:", error);
-      return [];
-    }
-  };
-
-  const sendNotification = async (userId, notificationType, content) => {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        console.error("No authentication token found.");
-        return;
-      }
-
-      const response = await axios.post(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/notifications/sendNotification`,
-        {},
-        {
-          params: {
-            userId,
-            notificationType,
-            content,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        console.log("Notification sent successfully:", response.data);
-      } else {
-        console.error("Failed to send notification:", response);
-      }
-    } catch (error) {
-      console.error("Error sending notification:", error);
-    }
-  };
-  //dsdsdsd
   const handleChangeStatus = async (newStatus) => {
+    setIsUpdatingStatus(true);
     try {
       await axios.put(
         `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/updateArticleStatusByArticleId/${article.articleId}?newStatus=${newStatus}`,
@@ -400,365 +147,204 @@ const ArticleDetail = () => {
         }
       );
 
-      const notificationContent =
-        newStatus === "accepted"
-          ? "Bài viết của bạn vừa được phê duyệt"
-          : "Bài viết của bạn đã bị từ chối";
-      await sendNotification(
-        article.authorId,
-        "new_article",
-        notificationContent
-      );
+      setCurrentStatus(newStatus);
 
-      if (newStatus === "accepted") {
-        // Gọi API để tăng điểm
-        await axios.put(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${article.authorId}/20`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          }
-        );
-
-        // Lấy danh sách người theo dõi
-        const followers = await fetchFollowers(article.authorId);
-        if (followers && followers.length > 0) {
-          for (const follower of followers) {
-            await sendNotification(
-              follower.followerId,
-              "new_article",
-              "Người bạn theo dõi vừa đăng bài viết mới"
-            );
-          }
-        }
-      }
-
-      // Refresh the article data after status change
-      const response = await axios.get(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/Article/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-      setArticle(response.data);
-      alert(
-        newStatus === "accepted"
-          ? "Bài viết đã được chấp nhận và cộng 20 điểm cho tác giả, thông báo đến người theo dõi (nếu có)!"
-          : "Bài viết đã bị từ chối và thông báo đến tác giả!"
-      );
+      message.success(`Trạng thái bài viết đã được cập nhật: ${newStatus}`);
     } catch (error) {
       console.error("Error changing article status:", error);
-      alert("Không thể thay đổi trạng thái bài viết. Vui lòng thử lại.");
+      message.error("Không thể thay đổi trạng thái bài viết.");
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
-  const replaceOembedWithIframe = (htmlContent) => {
-    if (!htmlContent) return htmlContent;
 
-    const div = document.createElement("div");
-    div.innerHTML = htmlContent;
-
-    const oembedElements = div.querySelectorAll("oembed");
-    oembedElements.forEach((oembed) => {
-      const url = oembed.getAttribute("url");
-      if (url && url.includes("youtube.com/watch")) {
-        const videoId = new URL(url).searchParams.get("v");
-        const iframe = document.createElement("iframe");
-        iframe.setAttribute("width", "560");
-        iframe.setAttribute("height", "315");
-        iframe.setAttribute("src", `https://www.youtube.com/embed/${videoId}`);
-        iframe.setAttribute("frameborder", "0");
-        iframe.setAttribute(
-          "allow",
-          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        );
-        iframe.setAttribute("allowfullscreen", "true");
-
-        oembed.replaceWith(iframe);
-      }
-    });
-
-    return div.innerHTML;
-  };
+  if (isLoading) return <Spin tip="Đang tải chi tiết bài viết..." />;
 
   return (
-    <div className="admin-container">
-      <Sidebar activeTab="/articles-management" /> {/* Sử dụng Sidebar */}
-      {/* Content */}
-      <div className="content">
-        <div className="article-detail-container">
-          <h2>Thông tin chi tiết của Bài viết</h2>
-
-          {/* Nút quay lại và chỉnh sửa */}
-          <div className="top-buttons">
-            <button className="back-button" onClick={() => navigate(-1)}>
-              Quay lại
-            </button>
-
-            {roleId === 5 && (
-              <button
-                className="edit-button"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa"}
-              </button>
-            )}
-          </div>
-
-          {/* Hiển thị thông tin bài viết */}
-          {article ? (
-            <div className="body-container">
-              {isEditing ? (
-                <>
-                  <div>
-                    <label>Ngày phê duyệt:</label>
-                    <p>
-                      {moderateDate
-                        ? new Date(moderateDate).toLocaleString()
-                        : "Chưa được phê duyệt"}
-                    </p>
-                  </div>
-                  <div>
-                    <h2>Tiêu đề:</h2>
-                    <CKEditor
-                      editor={ClassicEditor}
-                      config={{
-                        licenseKey,
-                        toolbar: [
-                          "heading",
-                          "|",
-                          "bold",
-                          "italic",
-                          "link",
-                          "bulletedList",
-                          "numberedList",
-                          "blockQuote",
-                          "|",
-                          "imageUpload",
-                          "undo",
-                          "redo",
-                        ],
-                      }}
-                      data={formData.title}
-                      onChange={(event, editor) => {
-                        const data = editor.getData();
-                        setFormData((prev) => ({ ...prev, title: data }));
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label>Nội dung:</label>
-                    <CKEditor
-                      editor={ClassicEditor}
-                      config={{
-                        licenseKey,
-                        extraPlugins: [
-                          function CustomPlugin(editor) {
-                            editor.plugins.get(
-                              "FileRepository"
-                            ).createUploadAdapter = (loader) => {
-                              return new CustomUploadAdapter(loader);
-                            };
-                          },
-                        ],
-                        toolbar: [
-                          "heading",
-                          "|",
-                          "bold",
-                          "italic",
-                          "link",
-                          "bulletedList",
-                          "numberedList",
-                          "blockQuote",
-                          "|",
-                          "imageUpload",
-                          "undo",
-                          "redo",
-                        ],
-                      }}
-                      data={formData.content}
-                      onChange={(event, editor) => {
-                        const data = editor.getData();
-                        setFormData((prev) => ({ ...prev, content: data }));
-                      }}
-                    />
-                  </div>
-                  {/* Article Body Edit*/}
-                  <div className="article-bodies">
-                    <h3>Nội dung chi tiết</h3>
-                    {articleBodies
-                      .filter((body) => body.position !== 0)
-                      .map((body, index) => (
-                        <div key={body.bodyId} className="body-container">
-                          <CKEditor
-                            editor={ClassicEditor}
-                            config={{
-                              licenseKey,
-                              extraPlugins: [
-                                function CustomPlugin(editor) {
-                                  editor.plugins.get(
-                                    "FileRepository"
-                                  ).createUploadAdapter = (loader) => {
-                                    return new CustomUploadAdapter(loader);
-                                  };
-                                },
-                              ],
-                              toolbar: [
-                                "heading",
-                                "|",
-                                "bold",
-                                "italic",
-                                "link",
-                                "bulletedList",
-                                "numberedList",
-                                "blockQuote",
-                                "|",
-                                "imageUpload",
-                                "undo",
-                                "redo",
-                              ],
-                            }}
-                            data={body.content}
-                            onChange={(event, editor) => {
-                              const data = editor.getData();
-                              setArticleBodies((prev) =>
-                                prev.map((b, i) =>
-                                  i === index ? { ...b, content: data } : b
-                                )
-                              );
-                            }}
-                          />
-                          <div>
-                            <label>Image:</label>
-                            {body.imageUrl && (
-                              <img
-                                src={body.imageUrl}
-                                alt="Body"
-                                className="thumbnail"
-                              />
-                            )}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                handleUpdateBodyImage(body.bodyId, file);
-                              }}
-                            />
-                          </div>
-
-                          <button onClick={() => handleSaveBody(index)}>
-                            Save
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleDeleteBodyImage(body.bodyId, body.imageUrl)
-                            }
-                          >
-                            Xóa ảnh
-                          </button>
-                          <button
-                            onClick={() => handleHideBody(body.bodyId)}
-                            className="hide-button"
-                          >
-                            Ẩn nội dung
-                          </button>
-                        </div>
-                      ))}
-                  </div>
-                  <button className="save-button" onClick={handleSaveChanges}>
+    <MainLayout title="Chi tiết bài viết">
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: 12 }}
+            title={
+              <Space align="center">
+                <Title level={3}>Chi tiết bài viết</Title>
+                {roleId === 5 && (
+                  <Button
+                    type="link"
+                    icon={<EditOutlined />}
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa"}
+                  </Button>
+                )}
+              </Space>
+            }
+            extra={
+              roleId === 4 && (
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    onClick={() => handleChangeStatus("accepted")}
+                    loading={isUpdatingStatus}
+                  >
+                    Chấp nhận
+                  </Button>
+                  <Button
+                    type="danger"
+                    icon={<CloseOutlined />}
+                    onClick={() => handleChangeStatus("rejected")}
+                    loading={isUpdatingStatus}
+                  >
+                    Từ chối
+                  </Button>
+                </Space>
+              )
+            }
+          >
+            {article ? (
+              <>
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <Space align="start">
+                      <Avatar size={64} icon={<UserOutlined />} />
+                      <div>
+                        <Text strong>{formData.authorName}</Text>
+                        <br />
+                        <Text type="secondary">ID: {formData.authorId}</Text>
+                      </div>
+                    </Space>
+                  </Col>
+                </Row>
+                <Descriptions bordered column={1} style={{ marginTop: 20 }}>
+                  <Descriptions.Item label="Ngày phê duyệt">
+                    {moderateDate
+                      ? new Date(moderateDate).toLocaleString()
+                      : "Chưa được phê duyệt"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái">
+                    <Tag
+                      color={
+                        currentStatus === "accepted"
+                          ? "green"
+                          : currentStatus === "rejected"
+                          ? "red"
+                          : "orange"
+                      }
+                    >
+                      {currentStatus === "accepted"
+                        ? "Đã chấp nhận"
+                        : currentStatus === "rejected"
+                        ? "Đã từ chối"
+                        : "Đang chờ duyệt"}
+                    </Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+                <Divider style={{ marginTop: 20 }} />
+                <Descriptions bordered column={1}>
+                  <Descriptions.Item label="Tiêu đề">
+                    {isEditing ? (
+                      <CKEditor
+                        editor={ClassicEditor}
+                        config={{
+                          licenseKey,
+                          toolbar: [
+                            "heading",
+                            "|",
+                            "bold",
+                            "italic",
+                            "link",
+                            "bulletedList",
+                            "numberedList",
+                            "blockQuote",
+                            "|",
+                            "imageUpload",
+                            "undo",
+                            "redo",
+                          ],
+                        }}
+                        data={formData.title}
+                        onChange={(event, editor) => {
+                          const data = editor.getData();
+                          setFormData((prev) => ({ ...prev, title: data }));
+                        }}
+                      />
+                    ) : (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: article.title }}
+                      />
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Nội dung">
+                    {isEditing ? (
+                      <CKEditor
+                        editor={ClassicEditor}
+                        config={{
+                          licenseKey,
+                          toolbar: [
+                            "heading",
+                            "|",
+                            "bold",
+                            "italic",
+                            "link",
+                            "bulletedList",
+                            "numberedList",
+                            "blockQuote",
+                            "|",
+                            "imageUpload",
+                            "undo",
+                            "redo",
+                          ],
+                        }}
+                        data={formData.content}
+                        onChange={(event, editor) => {
+                          const data = editor.getData();
+                          setFormData((prev) => ({ ...prev, content: data }));
+                        }}
+                      />
+                    ) : (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: article.content }}
+                      />
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
+                <Divider style={{ marginBottom: 20 }} />
+                <Row gutter={[16, 16]}>
+                  {articleImages.map((img) => (
+                    <Col key={img.articleImageId} xs={24} sm={12} md={8} lg={6}>
+                      <Image
+                        src={img.imageUrl}
+                        alt="Article Image"
+                        style={{
+                          width: "100%",
+                          objectFit: "cover",
+                          borderRadius: 8,
+                          marginBottom: 16,
+                        }}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+                {isEditing && (
+                  <Button
+                    type="primary"
+                    style={{ marginTop: 20 }}
+                    onClick={handleSaveChanges}
+                  >
                     Lưu thay đổi
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label>Ngày phê duyệt:</label>
-                    <p>
-                      {moderateDate
-                        ? new Date(moderateDate).toLocaleDateString()
-                        : "Chưa được phê duyệt"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label>Tác giả:</label>
-                    <p>{formData.authorName}</p>
-                  </div>
-                  <div>
-                    <label>ID Tác giả:</label>
-                    <p>{formData.authorId}</p>
-                  </div>
-                  <div>
-                    <h3>Tiêu đề:</h3>
-                    <div
-                      dangerouslySetInnerHTML={{ __html: article.title }}
-                      className="article-content"
-                    ></div>
-                  </div>
-
-                  <div>
-                    <label>Nội dung:</label>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: replaceOembedWithIframe(article.content),
-                      }}
-                      className="article-content"
-                    ></div>
-                  </div>
-                  {/* Article Body Show */}
-                  <div className="article-bodies">
-                    {articleBodies
-                      .sort((a, b) => a.position - b.position) // Sắp xếp theo position
-                      .map((body, index) => (
-                        <div key={body.bodyId} className="body-container">
-                          <p>
-                            <strong>Vị trí:</strong> {body.position}
-                          </p>
-                          <div
-                            dangerouslySetInnerHTML={{ __html: body.content }}
-                          ></div>
-                          <div>
-                            <label>Image:</label>
-                            {body.imageUrl && (
-                              <img
-                                src={body.imageUrl}
-                                alt="Body"
-                                className="thumbnail"
-                              />
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <p>Đang tải thông tin bài viết...</p>
-          )}
-          {roleId === 4 && (
-            <div className="moderator-actions">
-              <button
-                className="accept-button"
-                onClick={() => handleChangeStatus("accepted")}
-              >
-                Chấp nhận bài viết
-              </button>
-              <button
-                className="reject-button"
-                onClick={() => handleChangeStatus("rejected")}
-              >
-                Từ chối bài viết
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+                  </Button>
+                )}
+              </>
+            ) : (
+              <p>Đang tải thông tin bài viết...</p>
+            )}
+          </Card>
+        </Col>
+      </Row>
+    </MainLayout>
   );
 };
 

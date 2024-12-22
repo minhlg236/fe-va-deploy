@@ -1,141 +1,37 @@
 .dish-detail-container {
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  background-color: #f8f8f8;
+  display: flex; /* Sử dụng flexbox để dễ dàng kiểm soát bố cục */
+  transition: all 0.3s ease-in-out;
 }
 
-.dish-info {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.dish-detail-container.image-hidden {
+  flex-direction: row-reverse; /* Đảo ngược thứ tự hiển thị khi ẩn ảnh */
 }
 
-.dish-info p {
-  margin: 10px 0;
+.dish-detail-image-wrapper {
+  width: 30%;
+  max-width: 30%;
+  transition: all 0.3s ease-in-out;
+  overflow: hidden; /* Ẩn phần thừa khi cuộn */
 }
 
-.dish-info label {
-  font-weight: bold;
-  display: block;
-  margin-top: 10px;
+.dish-detail-image-wrapper.hidden {
+  width: 0px;
+  max-width: 0px;
 }
 
-.edit-icon {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
+.dish-detail-content {
+  flex: 1;
+  padding-right: 24px;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
 }
 
-input,
-textarea {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+.dish-detail-content.image-hidden {
+  padding-right: 0;
 }
 
-textarea {
-  resize: vertical;
-  height: 100px;
-}
-
-.edit-button {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
-.edit-button:hover {
-  background-color: #45a049;
-}
-
-.top-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.back-button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 16px;
-  height: 50px;
-}
-
-.back-button:hover {
-  background-color: #45a049;
-}
-
-.header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.search-bar input {
-  padding: 10px;
-  width: 200px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.create-button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.create-button:hover {
-  background-color: #45a049;
-}
-
-.dish-info img {
-  margin-top: 10px;
-  border-radius: 10px;
-  width: 100px;
-  height: auto;
-}
-.ingredient-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.delete-ingredient-button {
-  margin-left: 20px;
-  background-color: red;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.add-ingredient-button {
-  margin-top: 20px;
-  background-color: green;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  cursor: pointer;
+.scrollable-content {
+  overflow-y: auto; /* Cho phép cuộn nội dung */
+  max-height: calc(100vh - 180px); /* Điều chỉnh chiều cao cho phù hợp */
+  padding-right: 10px; /* Khoảng cách giữa thanh cuộn và lề phải*/
 }

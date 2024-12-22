@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/DishesManagement.css"; // Ensure this file contains the styles
+import { Button, Spin, message } from "antd";
+import MainLayout from "../components/MainLayout"; // Sử dụng layout tổng thể
 import SearchBar from "../components/SearchBar";
 import DishTable from "../components/DishTable";
 import axios from "axios";
-
-import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const DishesManagement = () => {
   const navigate = useNavigate();
@@ -42,6 +41,8 @@ const DishesManagement = () => {
         if (error.response && error.response.status === 401) {
           localStorage.removeItem("authToken");
           navigate("/");
+        } else {
+          message.error("Đã xảy ra lỗi khi tải danh sách món ăn.");
         }
       } finally {
         setIsLoading(false);
@@ -79,38 +80,38 @@ const DishesManagement = () => {
       setDishes((prevDishes) =>
         prevDishes.filter((dish) => dish.dishId !== dishId)
       );
-      alert("Món ăn đã được xóa thành công.");
+      message.success("Món ăn đã được xóa thành công.");
     } catch (error) {
       console.error("Error deleting dish:", error);
-      alert("Không thể xóa món ăn. Vui lòng thử lại.");
+      message.error("Không thể xóa món ăn. Vui lòng thử lại.");
     }
   };
 
   return (
-    <div className="dishes-management-container">
-      <Sidebar />
-      <div className="content">
-        <div className="header">
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          <button
-            className="create-button"
-            onClick={() => navigate("/create-dish")}
-          >
-            Tạo món ăn mới
-          </button>
-        </div>
-        {isLoading ? (
-          <div className="loading">Đang tải...</div>
-        ) : filteredDishes.length === 0 ? (
-          <div className="no-data">Không có món ăn nào để hiển thị.</div>
-        ) : (
-          <DishTable
-            dishes={filteredDishes}
-            handleDeleteClick={handleDeleteClick}
-          />
-        )}
+    <MainLayout title="Quản lý món ăn">
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <Button type="primary" onClick={() => navigate("/create-dish")}>
+          Tạo món ăn mới
+        </Button>
       </div>
-    </div>
+      {isLoading ? (
+        <Spin tip="Đang tải danh sách món ăn..." />
+      ) : filteredDishes.length === 0 ? (
+        <div>Không có món ăn nào để hiển thị.</div>
+      ) : (
+        <DishTable
+          dishes={filteredDishes}
+          handleDeleteClick={handleDeleteClick}
+        />
+      )}
+    </MainLayout>
   );
 };
 

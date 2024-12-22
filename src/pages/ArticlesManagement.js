@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import "../styles/ArticlesManagement.css";
+import { Button, Spin, message } from "antd";
+import MainLayout from "../components/MainLayout"; // Sử dụng MainLayout
 import SearchBar from "../components/SearchBar";
-import EnhancedTable from "../components/ArticleTable";
+import ArticleTable from "../components/ArticleTable";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/Sidebar"; // Import Sidebar
 
 const ArticlesManagement = () => {
   const [articles, setArticles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredArticles, setFilteredArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchArticleImages = async (articleId) => {
@@ -24,7 +25,7 @@ const ArticlesManagement = () => {
       );
       return response.data.length > 0 ? response.data[0].imageUrl : null;
     } catch (error) {
-      console.error(`Lỗi khi tải ảnh bài viết ${articleId}:`, error);
+      console.error(`Error fetching image for article ${articleId}:`, error);
       return null;
     }
   };
@@ -32,6 +33,7 @@ const ArticlesManagement = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(
           "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/articles/allArticleByRoleId/5",
           {
@@ -49,9 +51,12 @@ const ArticlesManagement = () => {
         );
 
         setArticles(articlesWithImages);
+        setFilteredArticles(articlesWithImages);
       } catch (error) {
-        console.error("Lỗi khi tải danh sách bài viết:", error);
-        alert("Không thể tải danh sách bài viết.");
+        console.error("Error fetching articles:", error);
+        message.error("Không thể tải danh sách bài viết.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -69,64 +74,25 @@ const ArticlesManagement = () => {
   }, [articles, searchTerm]);
 
   return (
-    <div className="articles-management-container">
-      <Sidebar /> {/* Sử dụng Sidebar */}
-      <div className="content">
-        <div className="articles-header">
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          <button
-            className="create-button"
-            onClick={() => navigate("/create-article")}
-          >
-            Create
-          </button>
-        </div>
-        <EnhancedTable
-          rows={filteredArticles.map((article) => ({
-            articleId: article.articleId,
-            title: (
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontFamily: "Arial, sans-serif",
-                  color: "#333",
-                  lineHeight: "1.5",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "200px",
-                }}
-                dangerouslySetInnerHTML={{ __html: article.title }}
-              />
-            ),
-            content: (
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontFamily: "Arial, sans-serif",
-                  color: "#333",
-                  lineHeight: "1.5",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "300px",
-                }}
-                dangerouslySetInnerHTML={{
-                  __html:
-                    article.content.length > 100
-                      ? article.content.slice(0, 100) + "..."
-                      : article.content,
-                }}
-              />
-            ),
-            authorName: article.authorName,
-            imageUrl: article.imageUrl,
-            status: article.status,
-            moderateDate: article.moderateDate || "N/A",
-          }))}
-        />
+    <MainLayout title="Quản lý bài viết">
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <Button type="primary" onClick={() => navigate("/create-article")}>
+          Tạo bài viết mới
+        </Button>
       </div>
-    </div>
+      {isLoading ? (
+        <Spin tip="Đang tải danh sách bài viết..." />
+      ) : (
+        <ArticleTable rows={filteredArticles} />
+      )}
+    </MainLayout>
   );
 };
 

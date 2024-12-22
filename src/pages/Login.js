@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { LockOutlined, MobileOutlined } from "@ant-design/icons";
+import { Form, Input, Button, Checkbox, Tabs, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "../styles/Login.css";
+import React from "react";
 
-// Define Role IDs
 const ROLES = {
   ADMIN: 1,
   STAFF: 2,
@@ -14,17 +13,16 @@ const ROLES = {
 };
 
 const Login = () => {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (values) => {
     try {
       const response = await axios.post(
         "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/login",
-        { phoneNumber, password }
+        {
+          phoneNumber: values.phoneNumber,
+          password: values.password,
+        }
       );
 
       if (response.status === 200) {
@@ -33,7 +31,6 @@ const Login = () => {
         localStorage.setItem("roleId", user.roleId);
         localStorage.setItem("userId", user.userId);
 
-        // Role-based Navigation
         switch (user.roleId) {
           case ROLES.ADMIN:
             navigate("/admin");
@@ -51,57 +48,75 @@ const Login = () => {
             navigate("/dishes-management");
             break;
           default:
-            setError("Vai trò người dùng không xác định!");
-            break;
+            message.error("Vai trò người dùng không xác định!");
         }
       } else {
-        setError("Số điện thoại hoặc mật khẩu không đúng!");
+        message.error("Số điện thoại hoặc mật khẩu không đúng!");
       }
-    } catch (err) {
-      setError("Đăng nhập thất bại. Vui lòng thử lại.");
+    } catch (error) {
+      message.error("Đăng nhập thất bại. Vui lòng thử lại.");
     }
   };
 
   return (
-    <div className="container login-container">
-      <div className="row justify-content-center align-items-center h-100">
-        <div className="col-lg-6 col-md-8">
-          <div className="card shadow-lg p-4">
-            <div className="card-body">
-              <h2 className="text-center mb-4">Đăng nhập</h2>
-              {error && <div className="alert alert-danger">{error}</div>}
-              <form onSubmit={handleLogin}>
-                <div className="form-group mb-3">
-                  <label htmlFor="phoneNumber">Số điện thoại</label>
-                  <input
-                    type="text"
-                    id="phoneNumber"
-                    className="form-control"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="Nhập số điện thoại"
-                    required
-                  />
-                </div>
-                <div className="form-group mb-3">
-                  <label htmlFor="password">Mật khẩu</label>
-                  <input
-                    type="password"
-                    id="password"
-                    className="form-control"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu"
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary w-100 mt-4">
+    <div
+      style={{
+        height: "100vh",
+        backgroundImage: `url("https://res.cloudinary.com/dpzzzifpa/image/upload/v1734878791/snapedit_1734878728641_wr4gho.png")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          padding: 24,
+          borderRadius: 8,
+          width: 400,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <h2 style={{ textAlign: "center", marginBottom: 24 }}>Đăng nhập</h2>
+        <Tabs defaultActiveKey="1">
+          <Tabs.TabPane tab="Đăng nhập bằng tài khoản" key="1">
+            <Form onFinish={handleLogin} layout="vertical">
+              <Form.Item
+                name="phoneNumber"
+                rules={[
+                  { required: true, message: "Vui lòng nhập số điện thoại!" },
+                ]}
+              >
+                <Input
+                  prefix={<MobileOutlined />}
+                  placeholder="Số điện thoại"
+                />
+              </Form.Item>
+              <Form.Item
+                name="password"
+                rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+              >
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Mật khẩu"
+                />
+              </Form.Item>
+              <Form.Item>
+                <Checkbox>Tự động đăng nhập</Checkbox>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" block>
                   Đăng nhập
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
+                </Button>
+              </Form.Item>
+            </Form>
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Đăng nhập bằng OTP" key="2">
+            <p>Chức năng này đang phát triển...</p>
+          </Tabs.TabPane>
+        </Tabs>
       </div>
     </div>
   );

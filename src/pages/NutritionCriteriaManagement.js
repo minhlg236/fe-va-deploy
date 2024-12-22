@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/NutritionCriteriaManagement.css";
-import axios from "axios";
+import { Button, Spin, message } from "antd";
+import MainLayout from "../components/MainLayout"; // Sử dụng MainLayout
 import SearchBar from "../components/SearchBar";
-import NutritionCriteriaTable from "../components/NutritionCriteriaTable"; // Assuming this is the NutritionCriteriaTable component
-import Sidebar from "../components/Sidebar"; // Import Sidebar
+import NutritionCriteriaTable from "../components/NutritionCriteriaTable";
+import axios from "axios";
 
 const NutritionCriteriaManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [nutritionCriteria, setNutritionCriteria] = useState([]); // Data from API
-  const [filteredCriteria, setFilteredCriteria] = useState([]); // Filtered data
+  const [nutritionCriteria, setNutritionCriteria] = useState([]);
+  const [filteredCriteria, setFilteredCriteria] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch data from API
   useEffect(() => {
     const fetchNutritionCriteria = async () => {
       try {
+        setIsLoading(true);
         const token = localStorage.getItem("authToken");
         const response = await axios.get(
           "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/nutritionCriterions/allNutritionCriteria",
@@ -30,9 +32,13 @@ const NutritionCriteriaManagement = () => {
       } catch (error) {
         console.error("Error fetching nutrition criteria:", error);
         if (error.response && error.response.status === 401) {
-          alert("You are not authorized. Please log in again.");
+          message.error("Bạn không có quyền truy cập. Vui lòng đăng nhập lại!");
           navigate("/");
+        } else {
+          message.error("Không thể tải dữ liệu tiêu chí dinh dưỡng.");
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -51,22 +57,30 @@ const NutritionCriteriaManagement = () => {
   }, [searchTerm, nutritionCriteria]);
 
   return (
-    <div className="nutrition-criteria-container">
-      <Sidebar />
-      <div className="content">
-        <div className="header">
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          <button
-            className="create-button"
-            onClick={() => navigate("/create-nutritionCriteria")}
-          >
-            Create
-          </button>
-        </div>
-        {/* Use the NutritionCriteriaTable */}
-        <NutritionCriteriaTable rows={filteredCriteria} />
+    <MainLayout title="Quản lý tiêu chí dinh dưỡng">
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <Button
+          type="primary"
+          onClick={() => navigate("/create-nutritionCriteria")}
+        >
+          Tạo tiêu chí mới
+        </Button>
       </div>
-    </div>
+      {isLoading ? (
+        <Spin tip="Đang tải dữ liệu..." />
+      ) : filteredCriteria.length === 0 ? (
+        <div>Không có tiêu chí nào để hiển thị.</div>
+      ) : (
+        <NutritionCriteriaTable rows={filteredCriteria} />
+      )}
+    </MainLayout>
   );
 };
 

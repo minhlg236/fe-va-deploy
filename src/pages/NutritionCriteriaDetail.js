@@ -1,14 +1,30 @@
 import React, { useEffect, useState } from "react";
+import {
+  Card,
+  Descriptions,
+  Button,
+  Input,
+  Select,
+  Form,
+  message,
+  Typography,
+  Spin,
+  Row,
+  Col,
+} from "antd";
+import { EditOutlined, SaveOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
-import "../styles/NutritionCriteriaDetail.css";
-import editIcon from "../assets/icons/edit-icon.png"; // Icon for editing
 import axios from "axios";
-import Sidebar from "../components/Sidebar"; // Import Sidebar
+import MainLayout from "../components/MainLayout";
+
+const { Title } = Typography;
+const { Option } = Select;
 
 const NutritionCriteriaDetail = () => {
-  const { id } = useParams(); // Nutrition criteria ID from the URL
+  const { id } = useParams();
   const [criteria, setCriteria] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   // Fetch Nutrition Criteria details by ID
@@ -26,9 +42,11 @@ const NutritionCriteriaDetail = () => {
         );
         setCriteria(response.data);
       } catch (error) {
-        console.error("Error fetching nutrition criteria details:", error);
-        alert("Failed to load nutrition criteria details.");
+        console.error("Lỗi khi tải chi tiết tiêu chí dinh dưỡng:", error);
+        message.error("Không thể tải chi tiết tiêu chí dinh dưỡng.");
         navigate("/nutritionCriteria-management");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -49,149 +67,411 @@ const NutritionCriteriaDetail = () => {
           },
         }
       );
-      alert("Nutrition criteria updated successfully!");
+      message.success("Cập nhật tiêu chí dinh dưỡng thành công!");
       setIsEditing(false);
     } catch (error) {
-      console.error("Error updating nutrition criteria:", error);
-      alert("Failed to update nutrition criteria.");
+      console.error("Lỗi khi cập nhật tiêu chí dinh dưỡng:", error);
+      message.error("Không thể cập nhật tiêu chí dinh dưỡng.");
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setCriteria({ ...criteria, [name]: value });
-  };
-
-  if (!criteria) {
-    return <p>Loading nutrition criteria details...</p>;
+  if (isLoading) {
+    return <Spin tip="Đang tải chi tiết tiêu chí dinh dưỡng..." />;
   }
 
   return (
-    <div className="admin-container">
-      <Sidebar />
-      <div className="content">
-        <div className="criteria-detail-container">
-          <h2>Nutrition Criteria Details</h2>
-
-          <div className="top-buttons">
-            <button className="back-button" onClick={() => navigate(-1)}>
-              Back
-            </button>
-            <div
-              className="edit-icon"
-              onClick={() => setIsEditing(!isEditing)}
-              style={{ cursor: "pointer" }}
-            >
-              <img src={editIcon} alt="Edit" width="40" height="40" />
-            </div>
-          </div>
-
-          <div className="criteria-info">
-            {Object.keys(criteria).map((key) => (
-              <div key={key}>
-                <label>{key.replace(/([A-Z])/g, " $1").toUpperCase()}:</label>
-                {key === "criteriaId" ? (
-                  // Readonly for ID
-                  <input type="text" value={criteria[key]} readOnly />
-                ) : isEditing ? (
-                  // Dropdowns for specific fields
-                  key === "gender" ? (
-                    <select
-                      name="gender"
-                      value={criteria.gender}
-                      onChange={handleChange}
-                    >
-                      <option value="Nam">Nam</option>
-                      <option value="Nữ">Nữ</option>
-                    </select>
-                  ) : key === "activityLevel" ? (
-                    <select
-                      name="activityLevel"
-                      value={criteria.activityLevel}
-                      onChange={handleChange}
-                    >
-                      <option value="Cao">Cao</option>
-                      <option value="Trung bình">Trung bình</option>
-                      <option value="Ít">Ít</option>
-                    </select>
-                  ) : key === "goal" ? (
-                    <select
-                      name="goal"
-                      value={criteria.goal}
-                      onChange={handleChange}
-                    >
-                      <option value="Tăng cân">Tăng cân</option>
-                      <option value="Giữ nguyên">Giữ nguyên</option>
-                      <option value="Giảm cân">Giảm cân</option>
-                    </select>
-                  ) : (
-                    // Input fields for other keys
-                    <input
-                      type={
-                        typeof criteria[key] === "number" ? "number" : "text"
-                      }
-                      name={key}
-                      value={criteria[key]}
-                      onChange={handleChange}
-                    />
-                  )
-                ) : (
-                  // Display data when not editing
-                  <p>{criteria[key]}</p>
+    <MainLayout title="Chi Tiết Tiêu Chí Dinh Dưỡng">
+      <Row gutter={24}>
+        <Col span={24}>
+          <Card
+            title={
+              <>
+                Chi Tiết Tiêu Chí Dinh Dưỡng
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => setIsEditing((prev) => !prev)}
+                >
+                  {isEditing ? "Hủy" : "Chỉnh sửa"}
+                </Button>
+                {isEditing && (
+                  <Button
+                    type="primary"
+                    onClick={handleUpdate}
+                    style={{ marginLeft: 10 }}
+                    icon={<SaveOutlined />}
+                  >
+                    Lưu
+                  </Button>
                 )}
-              </div>
-            ))}
-          </div>
-
-          {isEditing && (
-            <button className="edit-button" onClick={handleUpdate}>
-              Save Changes
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+              </>
+            }
+          >
+            <Descriptions bordered column={1} style={{ marginTop: 20 }}>
+              <Descriptions.Item label="Giới Tính">
+                {isEditing ? (
+                  <Select
+                    value={criteria.gender}
+                    onChange={(value) =>
+                      setCriteria((prev) => ({ ...prev, gender: value }))
+                    }
+                  >
+                    <Option value="Nam">Nam</Option>
+                    <Option value="Nữ">Nữ</Option>
+                  </Select>
+                ) : (
+                  criteria.gender || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Độ Tuổi">
+                {isEditing ? (
+                  <Input
+                    value={criteria.ageRange}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        ageRange: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.ageRange || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Chỉ Số BMI">
+                {isEditing ? (
+                  <Input
+                    value={criteria.bmiRange}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        bmiRange: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.bmiRange || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Nghề Nghiệp">
+                {isEditing ? (
+                  <Input
+                    value={criteria.profession}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        profession: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.profession || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mức Độ Hoạt Động">
+                {isEditing ? (
+                  <Select
+                    value={criteria.activityLevel}
+                    onChange={(value) =>
+                      setCriteria((prev) => ({ ...prev, activityLevel: value }))
+                    }
+                  >
+                    <Option value="Cao">Cao</Option>
+                    <Option value="Trung bình">Trung bình</Option>
+                    <Option value="Ít">Ít</Option>
+                  </Select>
+                ) : (
+                  criteria.activityLevel || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mục Tiêu">
+                {isEditing ? (
+                  <Select
+                    value={criteria.goal}
+                    onChange={(value) =>
+                      setCriteria((prev) => ({ ...prev, goal: value }))
+                    }
+                  >
+                    <Option value="Tăng cân">Tăng cân</Option>
+                    <Option value="Giữ nguyên">Giữ nguyên</Option>
+                    <Option value="Giảm cân">Giảm cân</Option>
+                  </Select>
+                ) : (
+                  criteria.goal || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lượng Calo (kcal)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.calories}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        calories: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.calories || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lượng Protein (g)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.protein}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        protein: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.protein || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lượng Carbs (g)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.carbs}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        carbs: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.carbs || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lượng Chất Béo (g)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.fat}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({ ...prev, fat: e.target.value }))
+                    }
+                  />
+                ) : (
+                  criteria.fat || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lượng Chất Xơ (g)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.fiber}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        fiber: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.fiber || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vitamin A (IU)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.vitaminA}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        vitaminA: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.vitaminA || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vitamin B (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.vitaminB}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        vitaminB: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.vitaminB || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vitamin C (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.vitaminC}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        vitaminC: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.vitaminC || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vitamin D (IU)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.vitaminD}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        vitaminD: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.vitaminD || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vitamin E (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.vitaminE}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        vitaminE: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.vitaminE || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Canxi (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.calcium}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        calcium: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.calcium || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Sắt (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.iron}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({ ...prev, iron: e.target.value }))
+                    }
+                  />
+                ) : (
+                  criteria.iron || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Magie (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.magnesium}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        magnesium: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.magnesium || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Omega-3 (g)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.omega3}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        omega3: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.omega3 || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Đường (g)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.sugars}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        sugars: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.sugars || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Cholesterol (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.cholesterol}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        cholesterol: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.cholesterol || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Natri (mg)">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={criteria.sodium}
+                    onChange={(e) =>
+                      setCriteria((prev) => ({
+                        ...prev,
+                        sodium: e.target.value,
+                      }))
+                    }
+                  />
+                ) : (
+                  criteria.sodium || "Không có dữ liệu"
+                )}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+        </Col>
+      </Row>
+    </MainLayout>
   );
 };
-
-// Sidebar component
-// const Sidebar = () => {
-//   const navigate = useNavigate();
-//   const handleLogout = () => {
-//     navigate("/");
-//   };
-
-//   return (
-//     <div className="sidebar">
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/dishes-management")}
-//       >
-//         Quản lý món ăn
-//       </div>
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/nutritionCriteria-management")}
-//       >
-//         Quản lí thể trạng
-//       </div>
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/Ingredient-management")}
-//       >
-//         Quản lí nguyên liệu
-//       </div>
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/articles-management")}
-//       >
-//         Quản lí bài viết
-//       </div>
-//       <div className="sidebar-item logout" onClick={handleLogout}>
-//         Đăng xuất
-//       </div>
-//     </div>
-//   );
-// };
 
 export default NutritionCriteriaDetail;
