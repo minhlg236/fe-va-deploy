@@ -1,13 +1,9 @@
-import React, { useState } from "react";
-import { Table, Button, Space, Popconfirm, Avatar } from "antd";
+import React from "react";
+import { Table, Button, Space, Avatar, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 
-const DishTable = ({ dishes, handleDeleteClick }) => {
+const DishTable = ({ dishes, handleStatusChangeClick }) => {
   const navigate = useNavigate();
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 5,
-  });
 
   const columns = [
     {
@@ -56,12 +52,15 @@ const DishTable = ({ dishes, handleDeleteClick }) => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status) =>
-        status === "active" ? (
-          <span style={{ color: "green" }}>Hoạt động</span>
-        ) : (
-          <span style={{ color: "red" }}>Không hoạt động</span>
-        ),
+      render: (status) => {
+        let color = "red";
+        let text = "Dừng bán";
+        if (status === "active") {
+          color = "green";
+          text = "Đang bán";
+        }
+        return <Tag color={color}>{text}</Tag>;
+      },
     },
     {
       title: "Hành động",
@@ -74,16 +73,9 @@ const DishTable = ({ dishes, handleDeleteClick }) => {
           >
             Xem chi tiết
           </Button>
-          <Popconfirm
-            title="Bạn có chắc chắn muốn xóa món ăn này?"
-            onConfirm={() => handleDeleteClick(record.dishId)}
-            okText="Có"
-            cancelText="Không"
-          >
-            <Button type="link" danger>
-              Xóa
-            </Button>
-          </Popconfirm>
+          <Button type="link" onClick={() => handleStatusChangeClick(record)}>
+            {record.status === "active" ? "Ngừng bán" : "Mở bán"}
+          </Button>
         </Space>
       ),
     },
@@ -94,8 +86,7 @@ const DishTable = ({ dishes, handleDeleteClick }) => {
       columns={columns}
       dataSource={dishes}
       rowKey="dishId"
-      pagination={pagination}
-      onChange={(pagination) => setPagination(pagination)}
+      pagination={{ pageSize: 5 }}
     />
   );
 };

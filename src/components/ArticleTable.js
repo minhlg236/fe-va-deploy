@@ -1,9 +1,29 @@
 import React from "react";
-import { Table, Button, Space, Image } from "antd";
+import { Table, Button, Space, Tag, Image } from "antd";
 import { useNavigate } from "react-router-dom";
 
 const ArticleTable = ({ rows }) => {
   const navigate = useNavigate();
+
+  const stripHtml = (html) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || "";
+  };
+
+  const extractImageFromContent = (content) => {
+    if (!content) return null;
+    const imageRegex = /<img.*?src=["'](.*?)["'].*?>/;
+    const match = content.match(imageRegex);
+
+    if (match && match[1]) {
+      return {
+        imageUrl: match[1],
+        strippedContent: content.replace(imageRegex, ""),
+      };
+    }
+    return { imageUrl: null, strippedContent: content };
+  };
 
   const columns = [
     {
@@ -16,19 +36,22 @@ const ArticleTable = ({ rows }) => {
       title: "Tiêu đề",
       dataIndex: "title",
       key: "title",
-      render: (text) => (
-        <div
-          style={{
-            maxWidth: "200px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-          title={text}
-        >
-          {text}
-        </div>
-      ),
+      render: (text) => {
+        const strippedText = stripHtml(text);
+        return (
+          <div
+            style={{
+              maxWidth: "200px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={strippedText}
+          >
+            {strippedText}
+          </div>
+        );
+      },
     },
     {
       title: "Tác giả",
@@ -39,28 +62,33 @@ const ArticleTable = ({ rows }) => {
       title: "Nội dung",
       dataIndex: "content",
       key: "content",
-      render: (text) => (
-        <div
-          style={{
-            maxWidth: "300px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-          title={text}
-        >
-          {text}
-        </div>
-      ),
+      render: (text, record) => {
+        const { strippedContent } = extractImageFromContent(text);
+        const strippedText = stripHtml(strippedContent);
+        return (
+          <div
+            style={{
+              maxWidth: "300px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={strippedText}
+          >
+            {strippedText}
+          </div>
+        );
+      },
     },
     {
       title: "Hình ảnh",
-      dataIndex: "imageUrl",
+      dataIndex: "content",
       key: "imageUrl",
-      render: (src) =>
-        src ? (
+      render: (text) => {
+        const { imageUrl } = extractImageFromContent(text);
+        return imageUrl ? (
           <Image
-            src={src}
+            src={imageUrl}
             alt="Article"
             width={50}
             height={50}
@@ -68,18 +96,22 @@ const ArticleTable = ({ rows }) => {
           />
         ) : (
           "Không có ảnh"
-        ),
+        );
+      },
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status) =>
-        status === "pending"
-          ? "Đang chờ duyệt"
-          : status === "accepted"
-          ? "Đã duyệt"
-          : "Bị từ chối",
+      render: (status) => {
+        let color = "default";
+        let text = "Bị từ chối";
+        if (status === "accepted") {
+          color = "green";
+          text = "Đã duyệt";
+        }
+        return <Tag color={color}>{text}</Tag>;
+      },
     },
     {
       title: "Hành động",

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Spin, message } from "antd";
-import MainLayout from "../components/MainLayout"; // Sử dụng layout tổng thể
+import MainLayout from "../components/MainLayout";
 import SearchBar from "../components/SearchBar";
 import DishTable from "../components/DishTable";
 import axios from "axios";
@@ -13,7 +13,6 @@ const DishesManagement = () => {
   const [filteredDishes, setFilteredDishes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch all dishes from the API
   useEffect(() => {
     const fetchDishes = async () => {
       try {
@@ -21,7 +20,7 @@ const DishesManagement = () => {
         const token = localStorage.getItem("authToken");
 
         if (!token) {
-          navigate("/"); // Redirect to login if not authorized
+          navigate("/");
           return;
         }
 
@@ -52,7 +51,6 @@ const DishesManagement = () => {
     fetchDishes();
   }, [navigate]);
 
-  // Filter dishes based on search input
   useEffect(() => {
     const filtered = dishes.filter(
       (dish) =>
@@ -63,27 +61,61 @@ const DishesManagement = () => {
     setFilteredDishes(filtered);
   }, [searchTerm, dishes]);
 
-  // Handle deleting a dish
-  const handleDeleteClick = async (dishId) => {
+  const fetchDishDetails = async (dishId) => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.delete(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/delete/${dishId}`,
+      const response = await axios.get(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/GetDishByID/${dishId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
-      // Update the dish list after deletion
-      setDishes((prevDishes) =>
-        prevDishes.filter((dish) => dish.dishId !== dishId)
-      );
-      message.success("Món ăn đã được xóa thành công.");
+      return response.data;
     } catch (error) {
-      console.error("Error deleting dish:", error);
-      message.error("Không thể xóa món ăn. Vui lòng thử lại.");
+      console.error("Error fetching dish details:", error);
+      message.error("Không thể tải thông tin món ăn.");
+      return null;
+    }
+  };
+
+  const handleStatusChangeClick = async (dish) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const newStatus = dish.status === "active" ? "inactive" : "active";
+
+      const dishDetails = await fetchDishDetails(dish.dishId);
+
+      if (!dishDetails) {
+        return; // Exit if fetching details failed
+      }
+
+      const updatedDish = {
+        ...dishDetails,
+        status: newStatus,
+      };
+
+      const endpoint = `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/dishs/updateDishDetailByDishId`;
+
+      // Thực hiện yêu cầu PUT
+      await axios.put(endpoint, updatedDish, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Cập nhật trạng thái món ăn trong danh sách
+      setDishes((prevDishes) =>
+        prevDishes.map((d) =>
+          d.dishId === dish.dishId ? { ...d, status: newStatus } : d
+        )
+      );
+      message.success(`Món ăn đã được chuyển sang trạng thái ${newStatus}.`);
+    } catch (error) {
+      console.error("Error changing dish status:", error);
+      message.error("Không thể thay đổi trạng thái món ăn. Vui lòng thử lại.");
     }
   };
 
@@ -108,7 +140,7 @@ const DishesManagement = () => {
       ) : (
         <DishTable
           dishes={filteredDishes}
-          handleDeleteClick={handleDeleteClick}
+          handleStatusChangeClick={handleStatusChangeClick}
         />
       )}
     </MainLayout>

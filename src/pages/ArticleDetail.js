@@ -133,6 +133,56 @@ const ArticleDetail = () => {
     }
   };
 
+  const fetchFollowers = async (authorId) => {
+    try {
+      const response = await axios.get(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/follows/allFollowerByUserId/${authorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      return [];
+    }
+  };
+
+  const sendNotification = async (userId, notificationType, content) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/notifications/sendNotification`,
+        {},
+        {
+          params: {
+            userId,
+            notificationType,
+            content,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Notification sent successfully:", response.data);
+      } else {
+        console.error("Failed to send notification:", response);
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  };
+
   const handleChangeStatus = async (newStatus) => {
     setIsUpdatingStatus(true);
     try {
@@ -147,9 +197,48 @@ const ArticleDetail = () => {
         }
       );
 
+      const notificationContent =
+        newStatus === "accepted"
+          ? "Bài viết của bạn vừa được phê duyệt và bạn được cộng 20 điểm"
+          : "Bài viết của bạn đã bị từ chối";
+      await sendNotification(
+        article.authorId,
+        "new_article",
+        notificationContent
+      );
+
+      if (newStatus === "accepted") {
+        // Gọi API để tăng điểm
+        await axios.put(
+          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${article.authorId}/20`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+
+        // Lấy danh sách người theo dõi
+        const followers = await fetchFollowers(article.authorId);
+        if (followers && followers.length > 0) {
+          for (const follower of followers) {
+            await sendNotification(
+              follower.followerId,
+              "new_article",
+              "Người bạn theo dõi vừa đăng bài viết mới"
+            );
+          }
+        }
+      }
+
       setCurrentStatus(newStatus);
 
-      message.success(`Trạng thái bài viết đã được cập nhật: ${newStatus}`);
+      message.success(
+        newStatus === "accepted"
+          ? "Bài viết đã được chấp nhận và cộng 20 điểm cho tác giả, thông báo đến người theo dõi"
+          : "Bài viết đã bị từ chối và thông báo đến tác giả!"
+      );
     } catch (error) {
       console.error("Error changing article status:", error);
       message.error("Không thể thay đổi trạng thái bài viết.");
@@ -182,7 +271,8 @@ const ArticleDetail = () => {
               </Space>
             }
             extra={
-              roleId === 4 && (
+              roleId === 4 &&
+              currentStatus === "pending" && (
                 <Space>
                   <Button
                     type="primary"
@@ -241,9 +331,6 @@ const ArticleDetail = () => {
                         : "Đang chờ duyệt"}
                     </Tag>
                   </Descriptions.Item>
-                </Descriptions>
-                <Divider style={{ marginTop: 20 }} />
-                <Descriptions bordered column={1}>
                   <Descriptions.Item label="Tiêu đề">
                     {isEditing ? (
                       <CKEditor
@@ -310,24 +397,34 @@ const ArticleDetail = () => {
                       />
                     )}
                   </Descriptions.Item>
+                  {roleId === 4 && ( // Conditional rendering of the entire Descriptions.Item
+                    <Descriptions.Item label="Hình ảnh bài viết của khách hàng">
+                      <Row gutter={[16, 16]}>
+                        {articleImages.map((img) => (
+                          <Col
+                            key={img.articleImageId}
+                            xs={24}
+                            sm={12}
+                            md={8}
+                            lg={6}
+                          >
+                            <Image
+                              src={img.imageUrl}
+                              alt="Article Image"
+                              style={{
+                                width: "100%",
+                                objectFit: "cover",
+                                borderRadius: 8,
+                                marginBottom: 16,
+                              }}
+                            />
+                          </Col>
+                        ))}
+                      </Row>
+                    </Descriptions.Item>
+                  )}
                 </Descriptions>
-                <Divider style={{ marginBottom: 20 }} />
-                <Row gutter={[16, 16]}>
-                  {articleImages.map((img) => (
-                    <Col key={img.articleImageId} xs={24} sm={12} md={8} lg={6}>
-                      <Image
-                        src={img.imageUrl}
-                        alt="Article Image"
-                        style={{
-                          width: "100%",
-                          objectFit: "cover",
-                          borderRadius: 8,
-                          marginBottom: 16,
-                        }}
-                      />
-                    </Col>
-                  ))}
-                </Row>
+
                 {isEditing && (
                   <Button
                     type="primary"
