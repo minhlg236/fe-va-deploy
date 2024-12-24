@@ -1,215 +1,44 @@
 import React, { useState } from "react";
+import { Table, Button, Tag, Space, Select, message } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
 import PropTypes from "prop-types";
-import Box from "@mui/material/Box";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import VisibilityIcon from "@mui/icons-material/Visibility"; // Xem chi tiết
-import EditIcon from "@mui/icons-material/Edit"; // Biểu tượng chỉnh sửa
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { parseISO, format } from "date-fns";
 
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) return -1;
-  if (b[orderBy] > a[orderBy]) return 1;
-  return 0;
-}
+const { Option } = Select;
 
-function getComparator(order, orderBy) {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-function stableSort(array, comparator) {
-  const stabilizedArray = array.map((el, index) => [el, index]);
-  stabilizedArray.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  return stabilizedArray.map((el) => el[0]);
-}
-
-function EnhancedTableHead(props) {
-  const {
-    order,
-    orderBy,
-    onRequestSort,
-    onSelectAllClick,
-    numSelected,
-    rowCount,
-  } = props;
-
-  const createSortHandler = (property) => (event) => {
-    onRequestSort(event, property);
-  };
-
-  const columns = [
-    { id: "orderId", label: "Order ID" },
-    { id: "userId", label: "User ID" },
-    { id: "totalPrice", label: "Total Price (VNĐ)" },
-    { id: "orderDate", label: "Order Date" },
-    { id: "deliveryAddress", label: "Delivery Address" },
-    { id: "status", label: "Status" },
-  ];
-
-  return (
-    <TableHead>
-      <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
-        </TableCell>
-        {columns.map((column) => (
-          <TableCell
-            key={column.id}
-            sortDirection={orderBy === column.id ? order : false}
-            style={{ cursor: "pointer" }}
-            onClick={createSortHandler(column.id)}
-          >
-            {column.label}
-          </TableCell>
-        ))}
-        <TableCell align="right">Actions</TableCell>
-      </TableRow>
-    </TableHead>
-  );
-}
-
-EnhancedTableHead.propTypes = {
-  numSelected: PropTypes.number.isRequired,
-  onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
-  order: PropTypes.oneOf(["asc", "desc"]).isRequired,
-  orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired,
-};
-
-export default function OrderTable({
+const OrderTable = ({
   rows,
   handleDeleteClick,
   setOrders,
-  sendNotification, // Get sendNotification prop
-}) {
-  const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("orderId");
-  const [selected, setSelected] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  sendNotification,
+}) => {
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
   const navigate = useNavigate();
 
-  const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelected = rows.map((row) => row.orderId);
-      setSelected(newSelected);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleTableChange = (pagination) => {
+    setPagination(pagination);
   };
 
   const handleUpdateStatus = async (orderId, newStatus, userId) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      alert("Authentication token missing. Please log in again.");
-      return;
-    }
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
     try {
-      // Step 1: Update order status
-      const updateStatusResponse = await axios.put(
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        message.error("Token xác thực không tồn tại. Vui lòng đăng nhập lại.");
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      await axios.put(
         `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/updateStatusOrderByOrderId/${orderId}?newStatus=${newStatus}`,
         {},
         { headers }
       );
 
-      if (updateStatusResponse.status !== 200) {
-        alert("Failed to update order status.");
-        return;
-      }
-
-      // Step 2: Call shipping API if status is 'delivering'
-      if (newStatus === "delivering") {
-        try {
-          const createShippingResponse = await axios.post(
-            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/shipping/create`,
-            { orderId },
-            { headers }
-          );
-
-          if (createShippingResponse.status === 200) {
-            alert("Shipping record created successfully!");
-          } else {
-            alert("Failed to create shipping record.");
-          }
-        } catch (shippingError) {
-          console.error("Error creating shipping record:", shippingError);
-          alert("Failed to create shipping record. Please try again.");
-          return;
-        }
-      }
-
-      // Step 3: Update user points if status is 'delivered'
-      if (newStatus === "delivered") {
-        try {
-          const changePointResponse = await axios.put(
-            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/customers/EditCustomer/membership/changePoint/${userId}/20`,
-            {},
-            { headers }
-          );
-
-          if (changePointResponse.status === 200) {
-            console.log("User points updated successfully.");
-          } else {
-            alert("Failed to update user points.");
-          }
-        } catch (pointError) {
-          console.error("Error updating user points:", pointError);
-          alert("Failed to update user points. Please try again.");
-          return;
-        }
-      }
-
-      // Step 4: Update local state for orders
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.orderId === orderId ? { ...order, status: newStatus } : order
-        )
-      );
-
-      // Step 5: Send notification
       let content = "";
       switch (newStatus) {
         case "processing":
@@ -222,7 +51,7 @@ export default function OrderTable({
           content = "Đơn hàng của bạn đã được giao thành công.";
           break;
         case "cancel":
-          content = "Đơn hàng của bạn đã bị hủy, xin lỗi vì sự bất tiện.";
+          content = "Đơn hàng của bạn đã bị hủy.";
           break;
         default:
           content = "Trạng thái đơn hàng của bạn đã thay đổi.";
@@ -231,143 +60,108 @@ export default function OrderTable({
       if (sendNotification && userId) {
         await sendNotification(userId, "order_status", content);
       }
-    } catch (error) {
-      console.error(
-        "Error updating order status:",
-        error.response?.data || error.message
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.orderId === orderId ? { ...order, status: newStatus } : order
+        )
       );
-      alert("An error occurred. Please try again.");
+
+      message.success("Cập nhật trạng thái đơn hàng thành công.");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
+      message.error("Không thể cập nhật trạng thái đơn hàng.");
     }
   };
 
-  const isSelected = (id) => selected.indexOf(id) !== -1;
-
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  const columns = [
+    {
+      title: "ID Đơn Hàng",
+      dataIndex: "orderId",
+      key: "orderId",
+      sorter: (a, b) => a.orderId - b.orderId,
+    },
+    {
+      title: "ID Người Dùng",
+      dataIndex: "userId",
+      key: "userId",
+      sorter: (a, b) => a.userId - b.userId,
+    },
+    {
+      title: "Tổng Giá (VNĐ)",
+      dataIndex: "totalPrice",
+      key: "totalPrice",
+      sorter: (a, b) => a.totalPrice - b.totalPrice,
+    },
+    {
+      title: "Ngày Đặt",
+      dataIndex: "orderDate",
+      key: "orderDate",
+      sorter: (a, b) =>
+        parseISO(a.orderDate).getTime() - parseISO(b.orderDate).getTime(),
+      render: (orderDate) => format(parseISO(orderDate), "yyyy-MM-dd HH:mm:ss"),
+    },
+    {
+      title: "Địa Chỉ Giao Hàng",
+      dataIndex: "deliveryAddress",
+      key: "deliveryAddress",
+      sorter: (a, b) => a.deliveryAddress.localeCompare(b.deliveryAddress),
+    },
+    {
+      title: "Trạng Thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status, record) => (
+        <Select
+          value={status}
+          onChange={(newStatus) =>
+            handleUpdateStatus(record.orderId, newStatus, record.userId)
+          }
+          style={{ width: 150 }}
+        >
+          <Option value="pending">Chờ Xử Lý</Option>
+          <Option value="processing">Đang Xử Lý</Option>
+          <Option value="delivering">Đang Giao</Option>
+          <Option value="delivered">Đã Giao</Option>
+          <Option value="cancel">Đã Hủy</Option>
+        </Select>
+      ),
+    },
+    {
+      title: "Hành Động",
+      key: "actions",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => navigate(`/order-detail/${record.orderId}`)}
+          />
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <TableContainer>
-          <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              rowCount={rows.length}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-            />
-            <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => {
-                  const isItemSelected = isSelected(row.orderId);
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.orderId}
-                      selected={isItemSelected}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          onChange={() => {
-                            const selectedIndex = selected.indexOf(row.orderId);
-                            let newSelected = [];
-                            if (selectedIndex === -1) {
-                              newSelected = newSelected.concat(
-                                selected,
-                                row.orderId
-                              );
-                            } else if (selectedIndex === 0) {
-                              newSelected = newSelected.concat(
-                                selected.slice(1)
-                              );
-                            } else if (selectedIndex === selected.length - 1) {
-                              newSelected = newSelected.concat(
-                                selected.slice(0, -1)
-                              );
-                            } else if (selectedIndex > 0) {
-                              newSelected = newSelected.concat(
-                                selected.slice(0, selectedIndex),
-                                selected.slice(selectedIndex + 1)
-                              );
-                            }
-                            setSelected(newSelected);
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{row.orderId}</TableCell>
-                      <TableCell>{row.userId}</TableCell>
-                      <TableCell>{row.totalPrice}</TableCell>
-                      <TableCell>{row.orderDate}</TableCell>
-                      <TableCell>{row.deliveryAddress}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={row.status}
-                          onChange={(e) =>
-                            handleUpdateStatus(
-                              row.orderId,
-                              e.target.value,
-                              row.userId
-                            )
-                          }
-                        >
-                          {[
-                            "pending",
-                            "processing",
-                            "delivering",
-                            "delivered",
-                            "cancel",
-                          ].map((status) => (
-                            <MenuItem key={status} value={status}>
-                              {status}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          onClick={() =>
-                            navigate(`/order-detail/${row.orderId}`)
-                          }
-                          color="primary"
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: 53 * emptyRows }}>
-                  <TableCell colSpan={7} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </Box>
+    <Table
+      columns={columns}
+      dataSource={rows}
+      rowKey="orderId"
+      pagination={{
+        ...pagination,
+        pageSizeOptions: [5, 10, 20],
+        showSizeChanger: true,
+      }}
+      onChange={handleTableChange}
+    />
   );
-}
+};
 
 OrderTable.propTypes = {
   rows: PropTypes.array.isRequired,
   handleDeleteClick: PropTypes.func,
-  sendNotification: PropTypes.func.isRequired, // Add sendNotification prop
   setOrders: PropTypes.func.isRequired,
+  sendNotification: PropTypes.func.isRequired,
 };
+
+export default OrderTable;

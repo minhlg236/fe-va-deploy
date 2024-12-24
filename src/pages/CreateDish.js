@@ -14,6 +14,7 @@ import {
   Row,
   Col,
   Typography,
+  Tag, // Import Tag component
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import MainLayout from "../components/MainLayout";
@@ -30,6 +31,7 @@ const CreateDish = () => {
   const navigate = useNavigate();
   const [allIngredients, setAllIngredients] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [ingredientWeight, setIngredientWeight] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredIngredients, setFilteredIngredients] = useState([]);
   const [isCreatingDish, setIsCreatingDish] = useState(false);
@@ -57,16 +59,17 @@ const CreateDish = () => {
     fetchAllIngredients();
   }, []);
 
-  useEffect(() => {
-    if (searchTerm) {
-      const results = allIngredients.filter((ingredient) =>
-        ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleSearchIngredient = (value) => {
+    setSearchTerm(value);
+    if (value) {
+      const filtered = allIngredients.filter((ingredient) =>
+        ingredient.name.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredIngredients(results);
+      setFilteredIngredients(filtered);
     } else {
       setFilteredIngredients([]);
     }
-  }, [searchTerm, allIngredients]);
+  };
 
   const handleImageChange = ({ fileList }) => {
     setFileList(fileList);
@@ -141,13 +144,13 @@ const CreateDish = () => {
             console.log("Confirmed New Dish ID:", newDishId);
             if (selectedIngredients.length > 0) {
               await Promise.all(
-                selectedIngredients.map(async (item) => {
+                selectedIngredients.map(async (ingredientId) => {
                   try {
                     const token = localStorage.getItem("authToken");
                     const payload = {
                       dishId: newDishId,
-                      ingredientId: item.ingredientId,
-                      weight: parseFloat(item.weight),
+                      ingredientId: ingredientId,
+                      weight: parseFloat(ingredientWeight[ingredientId] || 0),
                     };
                     console.log("Payload to add ingredient:", payload);
                     await axios.post(
@@ -160,15 +163,15 @@ const CreateDish = () => {
                       }
                     );
                     console.log(
-                      `Ingredient with ID ${item.ingredientId} added successfully.`
+                      `Ingredient with ID ${ingredientId} added successfully.`
                     );
                   } catch (error) {
                     console.error(
-                      `Error adding ingredient with ID ${item.ingredientId}:`,
+                      `Error adding ingredient with ID ${ingredientId}:`,
                       error
                     );
                     message.error(
-                      `Không thể thêm nguyên liệu có ID ${item.ingredientId}. Vui lòng thử lại.`
+                      `Không thể thêm nguyên liệu có ID ${ingredientId}. Vui lòng thử lại.`
                     );
                   }
                 })
@@ -201,36 +204,38 @@ const CreateDish = () => {
     }
   };
 
-  const handleSelectIngredient = (ingredient) => {
+  const handleIngredientSelect = (ingredientId) => {
+    if (selectedIngredients.includes(ingredientId)) {
+      setSelectedIngredients(
+        selectedIngredients.filter((id) => id !== ingredientId)
+      );
+      const { [ingredientId]: removedWeight, ...restWeights } =
+        ingredientWeight;
+      setIngredientWeight(restWeights);
+    } else {
+      setSelectedIngredients([...selectedIngredients, ingredientId]);
+      setIngredientWeight((prevWeights) => ({
+        ...prevWeights,
+        [ingredientId]: 0,
+      }));
+    }
     setSearchTerm("");
     setFilteredIngredients([]);
-
-    const selectedIngredientIndex = selectedIngredients.findIndex(
-      (item) => item.ingredientId === ingredient.ingredientId
-    );
-
-    if (selectedIngredientIndex === -1) {
-      setSelectedIngredients([
-        ...selectedIngredients,
-        {
-          ingredientId: ingredient.ingredientId,
-          name: ingredient.name,
-          weight: "",
-        },
-      ]);
-    } else {
-      const newSelectedIngredients = [...selectedIngredients];
-      newSelectedIngredients.splice(selectedIngredientIndex, 1);
-      setSelectedIngredients(newSelectedIngredients);
-    }
   };
 
-  const handleIngredientWeightChange = (ingredientId, weight) => {
-    setSelectedIngredients((prevIngredients) => {
-      return prevIngredients.map((item) =>
-        item.ingredientId === ingredientId ? { ...item, weight } : item
-      );
-    });
+  const handleRemoveSelectedIngredient = (ingredientId) => {
+    setSelectedIngredients(
+      selectedIngredients.filter((id) => id !== ingredientId)
+    );
+    const { [ingredientId]: removedWeight, ...restWeights } = ingredientWeight;
+    setIngredientWeight(restWeights);
+  };
+
+  const handleWeightChange = (ingredientId, value) => {
+    setIngredientWeight((prevWeights) => ({
+      ...prevWeights,
+      [ingredientId]: value,
+    }));
   };
 
   return (
@@ -257,10 +262,16 @@ const CreateDish = () => {
                 ]}
               >
                 <Select placeholder="Chọn loại món ăn">
-                  <Option value="Món chính">Món chính</Option>
+                  <Option value="Món chính sáng">Món chính sáng</Option>
+                  <Option value="Món chính trưa">Món chính trưa</Option>
+                  <Option value="Món chính tối">Món chính tối</Option>
+                  <Option value="Khai vị sáng">Khai vị sáng</Option>
+                  <Option value="Khai vị trưa">Khai vị trưa</Option>
+                  <Option value="Khai vị tối">Khai vị tối</Option>
+                  <Option value="Tráng miệng sáng">Tráng miệng sáng</Option>
+                  <Option value="Tráng miệng trưa">Tráng miệng trưa</Option>
+                  <Option value="Tráng miệng tối">Tráng miệng tối</Option>
                   <Option value="Đồ uống">Đồ uống</Option>
-                  <Option value="Tráng miệng">Tráng miệng</Option>
-                  <Option value="Khai vị">Khai vị</Option>
                   <Option value="Canh">Canh</Option>
                 </Select>
               </Form.Item>
@@ -338,66 +349,65 @@ const CreateDish = () => {
 
               <div style={{ marginTop: "20px" }}>
                 <label>Chọn nguyên liệu:</label>
-                <Input
-                  type="text"
+                <Input.Search
+                  placeholder="Tìm kiếm nguyên liệu"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Tìm nguyên liệu..."
-                  style={{ marginBottom: "10px" }}
+                  onChange={(e) => handleSearchIngredient(e.target.value)}
+                  onSearch={handleSearchIngredient}
                 />
                 {filteredIngredients.length > 0 && (
-                  <List
-                    className="ingredient-search-results"
-                    dataSource={filteredIngredients}
-                    renderItem={(ingredient) => (
-                      <List.Item
-                        style={{
-                          cursor: "pointer",
-                          padding: "5px",
-                          borderBottom: "1px solid #ccc",
-                        }}
-                        onClick={() => handleSelectIngredient(ingredient)}
-                      >
-                        {ingredient.name}
-                      </List.Item>
-                    )}
-                  />
+                  <Card style={{ marginTop: 16 }}>
+                    <List
+                      dataSource={filteredIngredients}
+                      renderItem={(ingredient) => (
+                        <List.Item
+                          style={{ cursor: "pointer" }}
+                          onClick={() =>
+                            handleIngredientSelect(ingredient.ingredientId)
+                          }
+                        >
+                          {ingredient.name}
+                        </List.Item>
+                      )}
+                    />
+                  </Card>
                 )}
               </div>
+
               {selectedIngredients.length > 0 && (
-                <List
-                  className="selected-ingredients-list"
-                  header="Nguyên liệu đã chọn"
-                  dataSource={selectedIngredients}
-                  renderItem={(item) => (
-                    <List.Item
-                      actions={[
-                        <Button
-                          type="link"
-                          onClick={() => handleSelectIngredient(item)}
-                          key="remove"
-                        >
-                          Xóa
-                        </Button>,
-                      ]}
-                    >
-                      {item.name}
-                      <InputNumber
-                        style={{ marginLeft: "10px" }}
-                        placeholder="Khối lượng (g)"
-                        value={item.weight}
-                        onChange={(weight) =>
-                          handleIngredientWeightChange(
-                            item.ingredientId,
-                            weight
-                          )
+                <Card title="Nguyên liệu đã chọn" style={{ marginTop: 24 }}>
+                  {selectedIngredients.map((ingredientId) => {
+                    const selectedIngredient = allIngredients.find(
+                      (item) => item.ingredientId === ingredientId
+                    );
+                    return selectedIngredient ? (
+                      <Tag
+                        key={ingredientId}
+                        closable
+                        onClose={() =>
+                          handleRemoveSelectedIngredient(ingredientId)
                         }
-                      />
-                    </List.Item>
-                  )}
-                />
+                        style={{ marginBottom: 8 }}
+                      >
+                        {selectedIngredient.name}
+                        <InputNumber
+                          style={{ width: 100, marginLeft: 8 }}
+                          size="small"
+                          min={0}
+                          placeholder="Khối lượng (g)"
+                          value={ingredientWeight[ingredientId] || 0}
+                          onChange={(value) =>
+                            handleWeightChange(ingredientId, value)
+                          }
+                        />
+                        g
+                      </Tag>
+                    ) : null;
+                  })}
+                </Card>
               )}
-              <Form.Item>
+
+              <Form.Item style={{ marginTop: 24 }}>
                 <Button
                   type="primary"
                   htmlType="submit"

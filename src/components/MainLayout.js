@@ -91,6 +91,11 @@ const MainLayout = ({ children, title }) => {
         icon: <FileTextOutlined />,
         label: "Quản lý bài viết đã duyệt",
       },
+      {
+        key: "/invalidWord-management",
+        icon: <FileTextOutlined />,
+        label: "Quản lý từ bị cấm",
+      },
     ],
     // Nutritionist
     5: [
@@ -160,13 +165,15 @@ const MainLayout = ({ children, title }) => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            fontWeight: "bold",
-            fontSize: "16px",
             background: "#001529",
             color: "#fff",
           }}
         >
-          Logo
+          <img
+            src="https://res.cloudinary.com/dpzzzifpa/image/upload/v1734970532/VEGETARIANSLOGO1-removebg_o2glhi.png"
+            alt="Logo"
+            style={{ maxHeight: "100%", maxWidth: "100%" }}
+          />
         </div>
         <Menu
           theme="dark"

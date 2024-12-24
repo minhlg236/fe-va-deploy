@@ -59,6 +59,29 @@ const DishDetail = () => {
 
   const [form] = Form.useForm();
 
+  const dishTypeOptions = [
+    "Món chính sáng",
+    "Món chính trưa",
+    "Món chính tối",
+    "Khai vị sáng",
+    "Khai vị trưa",
+    "Khai vị tối",
+    "Tráng miệng sáng",
+    "Tráng miệng trưa",
+    "Tráng miệng tối",
+    "Đồ uống",
+    "Canh",
+  ];
+
+  // Define the dietary preference options
+  const dietaryPreferenceOptions = [
+    { value: 1, label: "Vegan" },
+    { value: 2, label: "Lacto" },
+    { value: 3, label: "Ovo" },
+    { value: 4, label: "Lacto-Ovo" },
+    { value: 5, label: "Pescatarian" },
+  ];
+
   // Fetch dish details and ingredients
   useEffect(() => {
     const fetchDishDetails = async () => {
@@ -161,16 +184,19 @@ const DishDetail = () => {
   const handleUpdateDish = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      let imageUrl = dish.imageUrl;
+      let imageUrl = dish.imageUrl; // Giữ lại imageUrl cũ ban đầu
 
-      if (fileList.length > 0) {
-        const file = fileList[0]?.originFileObj;
+      // Kiểm tra xem có file mới được chọn hay không
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        const file = fileList[0].originFileObj;
         imageUrl = await uploadImageToCloudinary(file);
       }
 
+      // Send dietaryPreferenceId instead of preferenceName
       const updatedDish = {
         ...dish,
         imageUrl,
+        // Make sure dietaryPreferenceId is included in the payload
       };
 
       await axios.put(
@@ -341,6 +367,10 @@ const DishDetail = () => {
 
   if (isLoading) return <Spin tip="Đang tải chi tiết món ăn..." />;
 
+  const handleDietaryPreferenceChange = (value) => {
+    setDish((prev) => ({ ...prev, dietaryPreferenceId: value }));
+  };
+
   return (
     <MainLayout title="Chi tiết món ăn">
       <Row gutter={24} style={{ transition: "all 0.3s ease-in-out" }}>
@@ -389,12 +419,20 @@ const DishDetail = () => {
               </Descriptions.Item>
               <Descriptions.Item label="Loại món">
                 {isEditing ? (
-                  <Input
+                  <Select
+                    placeholder="Chọn loại món"
                     value={dish.dishType}
-                    onChange={(e) =>
-                      setDish((prev) => ({ ...prev, dishType: e.target.value }))
+                    onChange={(value) =>
+                      setDish((prev) => ({ ...prev, dishType: value }))
                     }
-                  />
+                    style={{ width: "100%" }}
+                  >
+                    {dishTypeOptions.map((option) => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))}
+                  </Select>
                 ) : (
                   dish.dishType
                 )}
@@ -406,7 +444,9 @@ const DishDetail = () => {
                     onChange={(value) =>
                       setDish((prev) => ({ ...prev, price: value }))
                     }
+                    parser={(value) => parseInt(value, 10)} // Đảm bảo giá trị là số nguyên
                     formatter={(value) => `${value} VNĐ`}
+                    style={{ width: "100%" }}
                   />
                 ) : (
                   `${dish.price?.toLocaleString()} VNĐ`
@@ -414,15 +454,18 @@ const DishDetail = () => {
               </Descriptions.Item>
               <Descriptions.Item label="Trường phái ăn uống">
                 {isEditing ? (
-                  <Input
-                    value={dish.preferenceName}
-                    onChange={(e) =>
-                      setDish((prev) => ({
-                        ...prev,
-                        preferenceName: e.target.value,
-                      }))
-                    }
-                  />
+                  <Select
+                    placeholder="Chọn trường phái ăn uống"
+                    value={dish.dietaryPreferenceId}
+                    onChange={handleDietaryPreferenceChange}
+                    style={{ width: "100%" }}
+                  >
+                    {dietaryPreferenceOptions.map((option) => (
+                      <Option key={option.value} value={option.value}>
+                        {option.label}
+                      </Option>
+                    ))}
+                  </Select>
                 ) : (
                   dish.preferenceName || "Không có thông tin"
                 )}

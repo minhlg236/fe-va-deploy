@@ -29,6 +29,7 @@ import UserActivityManagement from "./pages/UserActivityManagement";
 import ModeratedArticles from "./pages/ModeratedArticles";
 import ShippingManagement from "./pages/ShippingManagement";
 import ShippingDetail from "./pages/ShippingDetail";
+import InvalidWordManagement from "./pages/InvalidWordManagement";
 // Hàm kiểm tra xác thực (JWT)
 const isAuthenticated = () => {
   const token = localStorage.getItem("authToken");
@@ -251,6 +252,14 @@ function App() {
           element={
             <PrivateRoute roles={["Admin", "Moderator"]}>
               <ArticleModerateManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/invalidWord-management"
+          element={
+            <PrivateRoute roles={["Admin", "Moderator"]}>
+              <InvalidWordManagement />
             </PrivateRoute>
           }
         />

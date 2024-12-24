@@ -1,44 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/OrderDetail.css";
-import Sidebar from "../components/Sidebar"; // Import Sidebar
+import { Card, Descriptions, Table, Spin, message, Typography } from "antd";
+import MainLayout from "../components/MainLayout";
 
-// const Sidebar = () => {
-//   const navigate = useNavigate();
-//   const handleLogout = () => {
-//     localStorage.removeItem("authToken");
-//     localStorage.removeItem("roleId");
-//     navigate("/");
-//   };
-
-//   return (
-//     <div className="sidebar">
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/orders-management")}
-//       >
-//         Quản lý đơn hàng
-//       </div>
-//       <div
-//         className="sidebar-item"
-//         onClick={() => navigate("/shipping-management")}
-//       >
-//         Quản lý thông tin ship hàng
-//       </div>
-
-//       <div className="sidebar-item logout" onClick={handleLogout}>
-//         Đăng xuất
-//       </div>
-//     </div>
-//   );
-// };
+const { Title } = Typography;
 
 const OrderDetail = () => {
-  const { id } = useParams(); // Lấy id từ URL
+  const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation(); // Lấy state từ navigate
-  const [order, setOrder] = useState(location.state?.order || null); // Lấy dữ liệu từ state hoặc null
   const [orderDetails, setOrderDetails] = useState([]);
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,21 +17,23 @@ const OrderDetail = () => {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const orderResponse = await axios.get(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/getOrderDetailByOrderId/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        setIsLoading(true);
+        const [orderDetailsResponse, paymentResponse] = await Promise.all([
+          axios.get(
+            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/getOrderDetailByOrderId/${id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
+          axios.get(
+            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/getPaymentDetailByOrderId/${id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
+        ]);
 
-        const paymentResponse = await axios.get(
-          `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/getPaymentDetailByOrderId/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        setOrderDetails(orderResponse.data);
+        setOrderDetails(orderDetailsResponse.data);
         if (paymentResponse.data && paymentResponse.data.length > 0) {
           setPaymentDetails(paymentResponse.data[0]);
         } else {
@@ -69,7 +41,7 @@ const OrderDetail = () => {
         }
       } catch (error) {
         console.error("Error fetching order details:", error);
-        alert("Không thể tải thông tin chi tiết đơn hàng.");
+        message.error("Không thể tải thông tin chi tiết đơn hàng.");
         navigate("/orders-management");
       } finally {
         setIsLoading(false);
@@ -79,104 +51,109 @@ const OrderDetail = () => {
     fetchOrderDetails();
   }, [id, token, navigate]);
 
+  const orderItemColumns = [
+    {
+      title: "Tên món",
+      dataIndex: "dishName",
+      key: "dishName",
+    },
+    {
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
+    },
+    {
+      title: "Giá",
+      dataIndex: "price",
+      key: "price",
+      render: (price) => `${price?.toLocaleString()} VNĐ`,
+    },
+  ];
+
   if (isLoading) {
-    return <div className="loading">Đang tải dữ liệu...</div>;
+    return <Spin tip="Đang tải chi tiết đơn hàng..." />;
   }
 
+  const calculateTotalPrice = () => {
+    return orderDetails.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+  };
+
   return (
-    <div className="admin-container">
-      <Sidebar />
-      <div className="content">
-        <div className="order-detail-container">
-          <h2>Thông tin chi tiết của Đơn hàng</h2>
-
-          {order && (
-            <div className="order-info">
-              <p>
-                <strong>Địa chỉ giao hàng:</strong>{" "}
-                {order.deliveryAddress || "Không có dữ liệu"}
-              </p>
-              <p>
-                <strong>Tổng giá:</strong>{" "}
-                {order.totalPrice
-                  ? `${order.totalPrice} VND`
-                  : "Không có dữ liệu"}
-              </p>
-              <p>
-                <strong>Ghi chú:</strong> {order.note || "Không có dữ liệu"}
-              </p>
-              <p>
-                <strong>Phí giao hàng:</strong>{" "}
-                {order.deliveryFee
-                  ? `${order.deliveryFee} VND`
-                  : "Không có dữ liệu"}
-              </p>
-            </div>
+    <MainLayout title={`Chi tiết đơn hàng #${id}`}>
+      <Card
+        title={<Title level={3}>Thông tin đơn hàng</Title>}
+        style={{ marginBottom: 24 }}
+      >
+        <Descriptions bordered column={1}>
+          {orderDetails.length > 0 && orderDetails[0].deliveryAddress && (
+            <Descriptions.Item label="Địa chỉ giao hàng">
+              {orderDetails[0].deliveryAddress || "Không có dữ liệu"}
+            </Descriptions.Item>
           )}
-
-          <div className="order-section">
-            <h2>Thông tin món ăn</h2>
-            {orderDetails.length > 0 ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Tên món</th>
-                    <th>Số lượng</th>
-                    <th>Giá</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orderDetails.map((item) => (
-                    <tr key={item.orderDetailId}>
-                      <td>{item.dishName}</td>
-                      <td>{item.quantity}</td>
-                      <td>{item.price} VND</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>Không có món ăn nào trong đơn hàng.</p>
+          <Descriptions.Item label="Tổng giá">
+            {calculateTotalPrice().toLocaleString()} VNĐ
+          </Descriptions.Item>
+          {orderDetails.length > 0 && orderDetails[0].note && (
+            <Descriptions.Item label="Ghi chú">
+              {orderDetails[0].note || "Không có dữ liệu"}
+            </Descriptions.Item>
+          )}
+          {orderDetails.length > 0 &&
+            orderDetails[0].deliveryFee !== undefined && (
+              <Descriptions.Item label="Phí giao hàng">
+                {orderDetails[0].deliveryFee?.toLocaleString() ||
+                  "Không có dữ liệu"}{" "}
+                VNĐ
+              </Descriptions.Item>
             )}
-          </div>
+          {orderDetails.length > 0 && orderDetails[0].orderStatus && (
+            <Descriptions.Item label="Trạng thái đơn hàng">
+              {orderDetails[0].orderStatus || "Không có dữ liệu"}
+            </Descriptions.Item>
+          )}
+          {orderDetails.length > 0 && orderDetails[0].orderDate && (
+            <Descriptions.Item label="Ngày tạo">
+              {new Date(orderDetails[0].orderDate).toLocaleString("vi-VN")}
+            </Descriptions.Item>
+          )}
+        </Descriptions>
+      </Card>
 
-          <div className="payment-section">
-            <h2>Thông tin thanh toán</h2>
-            {paymentDetails ? (
-              <ul>
-                <li>
-                  <strong>Phương thức thanh toán:</strong>{" "}
-                  {paymentDetails.paymentMethod || "Không có dữ liệu"}
-                </li>
-                <li>
-                  <strong>Trạng thái:</strong>{" "}
-                  {paymentDetails.paymentStatus || "Không có dữ liệu"}
-                </li>
-                <li>
-                  <strong>Thời gian thanh toán:</strong>{" "}
-                  {paymentDetails.paymentDate
-                    ? new Date(paymentDetails.paymentDate).toLocaleString(
-                        "vi-VN"
-                      )
-                    : "Không có dữ liệu"}
-                </li>
-              </ul>
-            ) : (
-              <p>Không có thông tin thanh toán.</p>
-            )}
-          </div>
+      <Card title={<Title level={4}>Thông tin món ăn</Title>}>
+        <Table
+          dataSource={orderDetails}
+          columns={orderItemColumns}
+          rowKey="orderDetailId"
+          pagination={false}
+        />
+      </Card>
 
-          <div className="top-buttons">
-            <button
-              className="back-button"
-              onClick={() => navigate("/orders-management")}
-            >
-              Quay lại
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      <Card
+        title={<Title level={4}>Thông tin thanh toán</Title>}
+        style={{ marginTop: 24 }}
+      >
+        {paymentDetails ? (
+          <Descriptions bordered column={1}>
+            <Descriptions.Item label="Phương thức thanh toán">
+              {paymentDetails.paymentMethod || "Không có dữ liệu"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              {paymentDetails.paymentStatus || "Không có dữ liệu"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thời gian thanh toán">
+              {paymentDetails.paymentDate
+                ? new Date(paymentDetails.paymentDate).toLocaleString("vi-VN")
+                : "Không có dữ liệu"}
+            </Descriptions.Item>
+          </Descriptions>
+        ) : (
+          <p>Không có thông tin thanh toán.</p>
+        )}
+      </Card>
+    </MainLayout>
   );
 };
 
