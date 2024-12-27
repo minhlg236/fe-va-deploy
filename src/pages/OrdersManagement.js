@@ -309,30 +309,6 @@ const OrdersManagement = () => {
     navigate(`/order-detail/${order.orderId}`, { state: { order } });
   };
 
-  // // Xóa đơn hàng
-  // const handleDeleteClick = async (orderId) => {
-  //   try {
-  //     const token = localStorage.getItem("authToken");
-  //     await axios.delete(
-  //       `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/${orderId}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     setOrders((prevOrders) =>
-  //       prevOrders.filter((order) => order.orderId !== orderId)
-  //     );
-
-  //     message.success("Đơn hàng đã được xóa thành công.");
-  //   } catch (error) {
-  //     console.error("Lỗi khi xóa đơn hàng:", error);
-  //     message.error("Không thể xóa đơn hàng. Vui lòng thử lại.");
-  //   }
-  // };
-
   return (
     <MainLayout title="Quản lý đơn hàng">
       <div
@@ -358,7 +334,6 @@ const OrdersManagement = () => {
         <OrderTable
           rows={filteredOrders}
           handleRowClick={handleRowClick}
-          // handleDeleteClick={handleDeleteClick}
           setOrders={setOrders}
           sendNotification={sendNotification}
         />

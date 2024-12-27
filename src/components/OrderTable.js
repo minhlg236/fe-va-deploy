@@ -39,6 +39,31 @@ const OrderTable = ({
         { headers }
       );
 
+      // Logic to call the createGhnOrder API when status is set to "delivering"
+      if (newStatus === "delivering") {
+        try {
+          const ghnResponse = await axios.post(
+            `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/createGhnOrder/${orderId}`,
+            {},
+            { headers }
+          );
+          console.log("createGhnOrder API response:", ghnResponse.data);
+          message.success("Đã tạo đơn hàng GHN thành công.");
+        } catch (error) {
+          console.error("Error calling createGhnOrder API:", error);
+          message.error("Lỗi khi tạo đơn hàng GHN.");
+          // Optionally revert the status update if createGhnOrder fails
+          setOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order.orderId === orderId
+                ? { ...order, status: "processing" }
+                : order
+            )
+          );
+          return; // Exit the function to prevent further actions based on the failed GHN order creation
+        }
+      }
+
       let content = "";
       switch (newStatus) {
         case "processing":
