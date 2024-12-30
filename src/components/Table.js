@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Space, Popconfirm, message, Tag } from "antd";
+import { Table, Button, Space, Popconfirm, message, Tag, Avatar } from "antd"; // Added Avatar
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -36,9 +36,29 @@ const EnhancedTable = ({ rows, onUserUpdated }) => {
 
   const columns = [
     {
+      title: "ID",
+      dataIndex: "userId",
+      key: "userId",
+      sorter: (a, b) => a.userId - b.userId, // Added sorting
+    },
+    {
       title: "Tên người dùng",
       dataIndex: "username",
       key: "username",
+    },
+    {
+      title: "Avatar",
+      dataIndex: "imageUrl", // Assuming you might have an imageUrl
+      key: "imageUrl",
+      render: (imageUrl) => (
+        <Avatar
+          shape="circle" // Changed to circle for users
+          size={48}
+          src={imageUrl}
+          alt="User"
+          style={{ objectFit: "cover" }}
+        />
+      ),
     },
     {
       title: "Email",
@@ -91,6 +111,7 @@ const EnhancedTable = ({ rows, onUserUpdated }) => {
           >
             Xem chi tiết
           </Button>
+
           <Popconfirm
             title="Bạn có chắc chắn muốn khóa người dùng này không?"
             onConfirm={() => handleDelete(record)}

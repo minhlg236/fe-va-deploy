@@ -87,14 +87,19 @@ const AdminPage = () => {
           { label: "Bị cấm", key: "Banned" },
         ]}
       />
-      <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      <Button
-        type="primary"
-        style={{ marginBottom: "16px" }}
-        onClick={() => navigate("/create-account")}
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
       >
-        Thêm người dùng
-      </Button>
+        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <Button type="primary" onClick={() => navigate("/create-account")}>
+          Thêm người dùng
+        </Button>
+      </div>
+
       <EnhancedTable rows={filteredUsers} onUserUpdated={fetchUsersData} />
     </MainLayout>
   );
