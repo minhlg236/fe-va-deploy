@@ -107,7 +107,7 @@ const EnhancedTable = ({ rows, onUserUpdated }) => {
         <Space size="middle">
           <Button
             type="link"
-            onClick={() => navigate(`/user/${record.userId}`)}
+            onClick={() => navigate(`/userDetail/${record.userId}`)}
           >
             Xem chi tiết
           </Button>

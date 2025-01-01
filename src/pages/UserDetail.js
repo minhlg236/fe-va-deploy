@@ -15,7 +15,6 @@ import { EditOutlined, LeftOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import MainLayout from "../components/MainLayout";
-import "../styles/UserDetail.css";
 
 const { Option } = Select;
 const { Title } = Typography;

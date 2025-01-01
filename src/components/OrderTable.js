@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Space, Select, message } from "antd";
+import { Table, Button, Space, Select, message, Tag } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
@@ -78,6 +78,9 @@ const OrderTable = ({
         case "cancel":
           content = "Đơn hàng của bạn đã bị hủy.";
           break;
+        case "failed":
+          content = "Đơn hàng của bạn giao không thành công.";
+          break;
         default:
           content = "Trạng thái đơn hàng của bạn đã thay đổi.";
       }
@@ -136,21 +139,43 @@ const OrderTable = ({
       title: "Trạng Thái",
       dataIndex: "status",
       key: "status",
-      render: (status, record) => (
-        <Select
-          value={status}
-          onChange={(newStatus) =>
-            handleUpdateStatus(record.orderId, newStatus, record.userId)
-          }
-          style={{ width: 150 }}
-        >
-          <Option value="pending">Chờ Xử Lý</Option>
-          <Option value="processing">Đang Xử Lý</Option>
-          <Option value="delivering">Đang Giao</Option>
-          <Option value="delivered">Đã Giao</Option>
-          <Option value="cancel">Đã Hủy</Option>
-        </Select>
-      ),
+      render: (status, record) => {
+        let color = "default";
+        let text = "";
+
+        if (status === "delivered") {
+          color = "green";
+          text = "Đã giao hàng";
+        } else if (status === "cancel") {
+          color = "red";
+          text = "Đã hủy";
+        } else if (status === "failed") {
+          color = "orange";
+          text = "Giao hàng thất bại";
+        }
+        const showDropdown = ["pending", "processing", "delivering"].includes(
+          status
+        );
+
+        return (
+          <Space>
+            {!showDropdown && <Tag color={color}>{text}</Tag>}
+            {showDropdown && (
+              <Select
+                value={status}
+                onChange={(newStatus) =>
+                  handleUpdateStatus(record.orderId, newStatus, record.userId)
+                }
+                style={{ width: 150 }}
+              >
+                <Option value="pending">Chờ xử lý</Option>
+                <Option value="processing">Đang xử lý</Option>
+                <Option value="delivering">Đang giao</Option>
+              </Select>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: "Hành Động",

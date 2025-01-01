@@ -63,7 +63,7 @@ const MainLayout = ({ children, title }) => {
   const linksByRole = {
     // Admin
     1: [
-      { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+      // { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
       { key: "/admin", icon: <UserOutlined />, label: "Quản lý người dùng" },
     ],
     // Staff
@@ -73,11 +73,11 @@ const MainLayout = ({ children, title }) => {
         icon: <ShopOutlined />,
         label: "Quản lý đặt món",
       },
-      {
-        key: "/shipping-management",
-        icon: <ProfileOutlined />,
-        label: "Quản lý ship hàng",
-      },
+      // {
+      //   key: "/shipping-management",
+      //   icon: <ProfileOutlined />,
+      //   label: "Quản lý ship hàng",
+      // },
     ],
     // Moderator
     4: [
