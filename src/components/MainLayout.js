@@ -67,7 +67,7 @@ const MainLayout = ({ children, title }) => {
       { key: "/admin", icon: <UserOutlined />, label: "Quản lý người dùng" },
     ],
     // Staff
-    2: [
+    2: [ 
       {
         key: "/orders-management",
         icon: <ShopOutlined />,
