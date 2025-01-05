@@ -57,7 +57,7 @@ const OrderDetail = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const token = localStorage.getItem("authToken");
-  const [creatingNewOrder, setCreatingNewOrder] = useState(false);
+  const [isRefunding, setIsRefunding] = useState(false);
   const [originalOrder, setOriginalOrder] = useState(null);
   const [customerUsername, setCustomerUsername] = useState("");
 
@@ -113,141 +113,38 @@ const OrderDetail = () => {
     fetchOrderDetails();
   }, [id, token, navigate]);
 
-  const handleRecreateOrder = async () => {
-    let latestOrderId;
+  const handleRefundOrder = async () => {
     try {
-      setCreatingNewOrder(true);
+      setIsRefunding(true);
       if (!originalOrder) {
-        throw new Error("Không có thông tin order để tạo lại");
+        throw new Error("Không có thông tin đơn hàng để hoàn tiền.");
       }
 
-      console.log("Original Order:", originalOrder);
-
-      const orderData = {
+      const refundData = {
         userId: originalOrder.userId,
-        totalPrice: originalOrder.totalPrice,
-        deliveryAddress: originalOrder.deliveryAddress || "Không có địa chỉ",
-        note: originalOrder.note || "Không có ghi chú",
-        deliveryFee: originalOrder.deliveryFee || 0,
-        discountRate: originalOrder.discountRate || 0,
-        discountPrice: originalOrder.discountPrice || 0,
-        phoneNumber: originalOrder.phoneNumber || "Không có số điện thoại",
-        receiverName: originalOrder.receiverName || "Không có tên người nhận",
-        orderDate: new Date().toISOString(),
-        status: "pending_payment",
-        orderCode: originalOrder.orderCode || "",
+        orderId: originalOrder.orderId,
       };
-
-      console.log("Order Data:", orderData);
-
-      let createOrderResponse;
-      try {
-        createOrderResponse = await axios.post(
-          "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/createOrderByStaff",
-          orderData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (error) {
-        console.error("❌ Error calling createOrderByStaff API:", error);
-        message.error("Không thể tạo đơn hàng mới.");
-        setCreatingNewOrder(false);
-        return;
-      }
-
-      if (!createOrderResponse.data) {
-        throw new Error("Không thể tạo đơn hàng mới.");
-      }
-      latestOrderId = createOrderResponse.data.orderId;
-
-      // Fetch latest order ID using getOrderByUserId
-      const getOrdersResponse = await axios.get(
-        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/getOrderByUserId/${originalOrder.userId}`,
+      console.log("Refund Data:", refundData);
+      const refundResponse = await axios.post(
+        `https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/payments/refund`,
+        refundData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      if (!getOrdersResponse.data) {
-        throw new Error("Không thể lấy thông tin đơn hàng từ server.");
-      }
-      const orders = getOrdersResponse.data;
-      const latestOrder = orders.reduce((maxOrder, order) =>
-        order.orderId > maxOrder.orderId ? order : maxOrder
-      );
-      latestOrderId = latestOrder.orderId;
-      console.log("Latest Order ID:", latestOrderId);
-
-      // Create OrderDetail for each item
-      if (orderDetails && orderDetails.length > 0) {
-        for (const item of orderDetails) {
-          const orderDetailData = {
-            orderId: latestOrderId,
-            dishId: item.dishId,
-            quantity: item.quantity,
-            price: item.price,
-          };
-
-          try {
-            await axios.post(
-              "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/orders/createOrderDetail",
-              orderDetailData,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-          } catch (error) {
-            console.error("❌ Error creating order detail:", error);
-            throw new Error(
-              `Không thể tạo chi tiết đơn hàng cho món: ${item.dishId}`
-            );
-          }
-        }
-      }
-
-      const paymentDetailData = {
-        orderId: latestOrderId,
-        paymentMethod: paymentDetails?.paymentMethod || "Unknown",
-        paymentStatus: "pending",
-        transactionId: "",
-        paymentDate: new Date().toISOString(),
-        amount: originalOrder.totalPrice,
-        refundAmount: 0,
-        returnUrl: "",
-        cancelUrl: "",
-      };
-
-      let createPaymentDetailResponse;
-      try {
-        createPaymentDetailResponse = await axios.post(
-          "https://vegetariansassistant-behjaxfhfkeqhbhk.southeastasia-01.azurewebsites.net/api/v1/payment/create",
-          paymentDetailData,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-      } catch (error) {
-        console.error("❌ Error calling createPaymentDetail API:", error);
-        message.error("Không thể tạo thông tin thanh toán mới.");
-        setCreatingNewOrder(false);
-        return;
-      }
-
-      if (!createPaymentDetailResponse.data) {
-        throw new Error("Không thể tạo thông tin thanh toán mới.");
-      }
-      if (customerUsername) {
-        message.success(
-          `✅ Đơn hàng của ${customerUsername} đã được tạo lại thành công!`
-        );
+      if (refundResponse.data.success) {
+        message.success(`✅ Đơn hàng #${id} đã được hoàn tiền thành công!`);
       } else {
-        message.success("✅ Đã tạo lại đơn hàng thành công!");
+        message.error(
+          refundResponse.data.message || "Không thể hoàn tiền đơn hàng."
+        );
       }
       navigate(`/orders-management`);
     } catch (error) {
-      console.error("❌ Lỗi tạo lại đơn hàng:", error);
-      message.error(error.message || "Có lỗi xảy ra khi tạo lại đơn hàng.");
+      console.error("❌ Lỗi khi hoàn tiền đơn hàng:", error);
+      message.error("Có lỗi xảy ra khi hoàn tiền đơn hàng.");
     } finally {
-      setCreatingNewOrder(false);
+      setIsRefunding(false);
     }
   };
 
@@ -354,11 +251,11 @@ const OrderDetail = () => {
       </Card>
       <Button
         type="primary"
-        onClick={handleRecreateOrder}
-        loading={creatingNewOrder}
+        onClick={handleRefundOrder}
+        loading={isRefunding}
         style={{ marginTop: 20 }}
       >
-        Tạo lại đơn hàng
+        Hoàn tiền đơn hàng
       </Button>
     </MainLayout>
   );
