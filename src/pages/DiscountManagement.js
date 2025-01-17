@@ -1,4 +1,3 @@
-// discountManagement.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -73,7 +72,7 @@ const DiscountManagement = () => {
         (activeTab === "bronze" && discount.tierName === "Bronze") ||
         (activeTab === "silver" && discount.tierName === "Silver") ||
         (activeTab === "gold" && discount.tierName === "Gold") ||
-        (activeTab === "platinum" && discount.tierName === "B?ch kim");
+        (activeTab === "platinum" && discount.tierName === "Platinum");
 
       const matchesSearchTerm =
         discount && discount.tierName
@@ -111,6 +110,8 @@ const DiscountManagement = () => {
           tierName: values.tierName,
           requiredPoints: values.requiredPoints,
           discountRate: decimalDiscountRate,
+          discountEndDate: values.discountEndDate,
+          newCreationDate: values.newCreationDate,
         },
         { headers }
       );
@@ -187,6 +188,12 @@ const DiscountManagement = () => {
               formatter={(value) => `${value}%`}
               parser={(value) => value.replace("%", "")}
             />
+          </Form.Item>
+          <Form.Item label="Discount End Date" name="discountEndDate">
+            <InputNumber style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item label="Creation Date" name="newCreationDate">
+            <InputNumber style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">

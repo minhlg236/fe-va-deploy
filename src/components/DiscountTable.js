@@ -1,4 +1,3 @@
-// discountTable.js
 import React, { useState } from "react";
 import {
   Table,
@@ -44,6 +43,8 @@ const DiscountTable = ({ rows, setDiscounts }) => {
           tierName: values.tierName,
           requiredPoints: values.requiredPoints,
           discountRate: decimalDiscountRate,
+          discountEndDate: values.discountEndDate,
+          newCreationDate: values.newCreationDate,
         },
         { headers }
       );
@@ -87,7 +88,10 @@ const DiscountTable = ({ rows, setDiscounts }) => {
   };
 
   const handleEdit = (record) => {
-    form.setFieldsValue({ ...record, discountRate: record.discountRate * 100 });
+    form.setFieldsValue({
+      ...record,
+      discountRate: record.discountRate * 100,
+    });
     setEditingTier(record);
     setIsModalVisible(true);
   };
@@ -148,8 +152,18 @@ const DiscountTable = ({ rows, setDiscounts }) => {
       title: "Discount Rate",
       dataIndex: "discountRate",
       key: "discountRate",
-      render: (discountRate) => `${(discountRate * 100).toFixed(2)}%`, // Display as text
+      render: (discountRate) => `${(discountRate * 100).toFixed(2)}%`,
       sorter: (a, b) => a.discountRate - b.discountRate,
+    },
+    {
+      title: "Discount End Date",
+      dataIndex: "discountEndDate",
+      key: "discountEndDate",
+    },
+    {
+      title: "Creation Date",
+      dataIndex: "newCreationDate",
+      key: "newCreationDate",
     },
     {
       title: "Actions",
@@ -216,6 +230,12 @@ const DiscountTable = ({ rows, setDiscounts }) => {
               formatter={(value) => `${value}%`}
               parser={(value) => value.replace("%", "")}
             />
+          </Form.Item>
+          <Form.Item label="Discount End Date" name="discountEndDate">
+            <InputNumber style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item label="Creation Date" name="newCreationDate">
+            <InputNumber style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
